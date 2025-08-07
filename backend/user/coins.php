@@ -85,6 +85,7 @@ try {
                     coins.price_change_24h, 
                     coins.coin_type,
                     coins.price_source,
+                    coins.logo_url,
                     "Kripto Para" as kategori_adi
                 FROM coins 
                 WHERE coins.id = ? AND coins.is_active = 1';
@@ -97,8 +98,10 @@ try {
             $coin['price_change_24h'] = floatval($coin['price_change_24h']);
             $coin['currency'] = 'TRY';
             
-            // Logo URL'si varsayılan olarak ekle
-            $coin['logo_url'] = 'https://via.placeholder.com/32x32/007bff/ffffff?text=' . substr($coin['coin_kodu'], 0, 2);
+            // Logo URL'si veritabanından gelsin, yoksa placeholder
+            if (empty($coin['logo_url'])) {
+                $coin['logo_url'] = 'https://via.placeholder.com/64x64/4fc3f7/ffffff?text=' . substr($coin['coin_kodu'], 0, 2);
+            }
             
             // Kategori adını coin tipine göre ayarla
             if ($coin['coin_type'] === 'manual') {
@@ -143,6 +146,7 @@ try {
                 coins.price_change_24h, 
                 coins.coin_type,
                 coins.price_source,
+                coins.logo_url,
                 "Kripto Para" as kategori_adi
             FROM coins 
             WHERE coins.is_active = 1';
@@ -174,8 +178,10 @@ try {
         $coin['price_change_24h'] = floatval($coin['price_change_24h']);
         $coin['currency'] = 'TRY';
         
-        // Logo URL'si varsayılan olarak ekle
-        $coin['logo_url'] = 'https://via.placeholder.com/32x32/007bff/ffffff?text=' . substr($coin['coin_kodu'], 0, 2);
+        // Logo URL'si veritabanından gelsin, yoksa placeholder
+        if (empty($coin['logo_url'])) {
+            $coin['logo_url'] = 'https://via.placeholder.com/64x64/4fc3f7/ffffff?text=' . substr($coin['coin_kodu'], 0, 2);
+        }
         
         // Kategori adını coin tipine göre ayarla
         if ($coin['coin_type'] === 'manual') {
