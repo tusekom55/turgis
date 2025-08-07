@@ -79,7 +79,7 @@ if (isset($_GET['action'])) {
 }
 
 // POST istekleri için JSON response
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
     
     // Admin kontrolü
@@ -88,7 +88,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
     
-    $action = $_POST['action'];
+    // Action parametresini al (POST veya GET'ten)
+    $action = $_POST['action'] ?? $_GET['action'] ?? '';
     $priceManager = new PriceManager();
     
     switch ($action) {

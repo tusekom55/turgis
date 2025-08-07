@@ -3757,10 +3757,11 @@
             
             try {
                 const formData = new FormData();
+                formData.append('action', 'increase_price');
                 formData.append('coin_code', coinCode);
                 formData.append('increase_percent', increasePercent);
                 
-                const response = await fetch('backend/admin/price_control.php?action=increase_price', {
+                const response = await fetch('backend/admin/price_control.php', {
                     method: 'POST',
                     body: formData
                 });
@@ -3805,10 +3806,11 @@
             
             try {
                 const formData = new FormData();
+                formData.append('action', 'increase_price');
                 formData.append('coin_code', coinCode);
                 formData.append('increase_percent', percentage);
                 
-                const response = await fetch('backend/admin/price_control.php?action=increase_price', {
+                const response = await fetch('backend/admin/price_control.php', {
                     method: 'POST',
                     body: formData
                 });
