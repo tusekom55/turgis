@@ -8632,13 +8632,13 @@
                      `;
                  }
                  
-                 // Hibrit endpoint'den veri çek
+                 // coins.php endpoint'den veri çek
                  const params = new URLSearchParams({
                      limit: 50,
                      search: searchInput
                  });
                  
-                 const response = await fetch(`backend/user/coins_hybrid.php?${params}`, {
+                 const response = await fetch(`backend/user/coins.php?${params}`, {
                      method: 'GET',
                      credentials: 'include'
                  });
