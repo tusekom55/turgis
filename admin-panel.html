@@ -3619,47 +3619,7 @@
                     displayPriceCoins(data.coins);
                     populatePriceCoinSelect(data.coins);
                 } else {
-                    // Mock data göster
-                    const mockCoins = [
-                        {
-                            id: 1,
-                            coin_adi: 'Tugaycoin',
-                            coin_kodu: 'T',
-                            current_price: 10.50,
-                            change_24h: 5.2,
-                            kaynak: 'Manuel',
-                            updated_at: new Date().toISOString()
-                        },
-                        {
-                            id: 2,
-                            coin_adi: 'SEX Coin',
-                            coin_kodu: 'SEX',
-                            current_price: 0.25,
-                            change_24h: -2.1,
-                            kaynak: 'Manuel',
-                            updated_at: new Date().toISOString()
-                        },
-                        {
-                            id: 3,
-                            coin_adi: 'TTT Dollar',
-                            coin_kodu: 'TTT',
-                            current_price: 34.15,
-                            change_24h: 1.8,
-                            kaynak: 'Manuel',
-                            updated_at: new Date().toISOString()
-                        },
-                        {
-                            id: 4,
-                            coin_adi: 'Bitcoin',
-                            coin_kodu: 'BTC',
-                            current_price: 2750000,
-                            change_24h: 3.5,
-                            kaynak: 'API',
-                            updated_at: new Date().toISOString()
-                        }
-                    ];
-                    displayPriceCoins(mockCoins);
-                    populatePriceCoinSelect(mockCoins);
+                    throw new Error(data.error || 'Coin verileri alınamadı');
                 }
             } catch (error) {
                 console.error('Coin fiyatları yüklenirken hata:', error);

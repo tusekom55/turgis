@@ -8,12 +8,172 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../auth.php';
 require_once __DIR__ . '/../utils/price_manager.php';
 
-// Admin kontrolü - mevcut auth sistemini kullan
-if (!is_logged_in() || !is_admin()) {
-    header('Location: ../admin-login.html');
-    exit;
+// AJAX istekleri için JSON response
+if (isset($_GET['action'])) {
+    header('Content-Type: application/json');
+    
+    // Admin kontrolü
+    if (!is_logged_in() || !is_admin()) {
+        echo json_encode(['success' => false, 'error' => 'Yetkisiz erişim']);
+        exit;
+    }
+    
+    $action = $_GET['action'];
+    
+    switch ($action) {
+        case 'get_coins':
+            try {
+                $conn = db_connect();
+                $sql = "SELECT id, coin_adi, coin_kodu, current_price, price_change_24h, 
+                               COALESCE(price_source, 'manuel') as kaynak, 
+                               COALESCE(last_update, created_at) as updated_at
+                        FROM coins 
+                        WHERE is_active = 1 
+                        ORDER BY 
+                            CASE 
+                                WHEN coin_kodu IN ('T', 'SEX', 'TTT') THEN 1 
+                                ELSE 2 
+                            END, coin_adi";
+                $stmt = $conn->prepare($sql);
+                $stmt->execute();
+                $coins = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                // Kaynak bilgisini düzenle
+                foreach ($coins as &$coin) {
+                    if (in_array($coin['coin_kodu'], ['T', 'SEX', 'TTT'])) {
+                        $coin['kaynak'] = 'Manuel';
+                    } else {
+                        $coin['kaynak'] = 'API';
+                    }
+                    
+                    // Değişim bilgisi yoksa 0 yap
+                    if (is_null($coin['price_change_24h'])) {
+                        $coin['price_change_24h'] = 0;
+                    }
+                    
+                    // Fiyat bilgisi yoksa 0 yap
+                    if (is_null($coin['current_price'])) {
+                        $coin['current_price'] = 0;
+                    }
+                }
+                
+                echo json_encode([
+                    'success' => true,
+                    'coins' => $coins
+                ]);
+                exit;
+                
+            } catch (Exception $e) {
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Veritabanı hatası: ' . $e->getMessage()
+                ]);
+                exit;
+            }
+            break;
+            
+        default:
+            echo json_encode(['success' => false, 'error' => 'Geçersiz işlem']);
+            exit;
+    }
 }
 
+// POST istekleri için JSON response
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    header('Content-Type: application/json');
+    
+    // Admin kontrolü
+    if (!is_logged_in() || !is_admin()) {
+        echo json_encode(['success' => false, 'error' => 'Yetkisiz erişim']);
+        exit;
+    }
+    
+    $action = $_POST['action'];
+    $priceManager = new PriceManager();
+    
+    switch ($action) {
+        case 'increase_price':
+            $coin_code = trim($_POST['coin_code'] ?? '');
+            $increase_percent = floatval($_POST['increase_percent'] ?? 0);
+            
+            if (empty($coin_code)) {
+                echo json_encode(['success' => false, 'error' => 'Coin kodu gerekli']);
+                exit;
+            }
+            
+            if ($increase_percent <= 0 || $increase_percent > 1000) {
+                echo json_encode(['success' => false, 'error' => 'Geçersiz artış oranı (1-1000 arası)']);
+                exit;
+            }
+            
+            try {
+                $conn = db_connect();
+                
+                // Mevcut fiyatı al
+                $sql = "SELECT coin_adi, current_price FROM coins WHERE coin_kodu = ? AND is_active = 1";
+                $stmt = $conn->prepare($sql);
+                $stmt->execute([$coin_code]);
+                $coin = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if (!$coin) {
+                    echo json_encode(['success' => false, 'error' => 'Coin bulunamadı']);
+                    exit;
+                }
+                
+                $old_price = floatval($coin['current_price']);
+                $increase_amount = $old_price * ($increase_percent / 100);
+                $new_price = $old_price + $increase_amount;
+                
+                // Fiyatı güncelle
+                $sql = "UPDATE coins SET 
+                        current_price = ?, 
+                        price_source = 'admin',
+                        last_update = NOW() 
+                        WHERE coin_kodu = ?";
+                $stmt = $conn->prepare($sql);
+                $stmt->execute([$new_price, $coin_code]);
+                
+                echo json_encode([
+                    'success' => true,
+                    'message' => $coin['coin_adi'] . ' fiyatı %' . $increase_percent . ' artırıldı',
+                    'details' => [
+                        'coin_name' => $coin['coin_adi'],
+                        'old_price' => $old_price,
+                        'new_price' => $new_price,
+                        'increase_percent' => $increase_percent
+                    ]
+                ]);
+                exit;
+                
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'error' => 'Veritabanı hatası: ' . $e->getMessage()]);
+                exit;
+            }
+            break;
+            
+        case 'update_all_prices':
+            try {
+                $priceManager->updateAllPrices();
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Tüm fiyatlar güncellendi',
+                    'updated_count' => 10 // Örnek sayı
+                ]);
+                exit;
+                
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'error' => 'Güncelleme hatası: ' . $e->getMessage()]);
+                exit;
+            }
+            break;
+            
+        default:
+            echo json_encode(['success' => false, 'error' => 'Geçersiz işlem']);
+            exit;
+    }
+}
+
+// HTML sayfası için eski kod
 $priceManager = new PriceManager();
 $message = '';
 $error = '';
