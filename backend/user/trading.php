@@ -499,19 +499,27 @@ try {
                 // 1. Mevcut değer = Net miktar × Güncel fiyat
                 $item['current_value'] = $item['net_miktar'] * $item['current_price'];
                 
-                // 2. KRITIK DÜZELTME: Gerçek yatırım tutarı hesaplaması
-                // Sadece kalan miktar için harcanan tutarı hesapla (FIFO mantığı)
+                // 2. KRITIK DÜZELTME: Gerçek yatırım tutarı hesaplaması - DOĞRU FIFO MANTIGI
                 $remaining_quantity = $item['net_miktar'];
+                $total_bought_amount = $item['total_bought_amount'];
+                $total_sold_amount = $item['total_sold_amount'];
                 $total_bought_quantity = $item['total_bought_quantity'];
                 $total_sold_quantity = $item['total_sold_quantity'];
                 
-                // Eğer hiç satış yapılmamışsa, basit hesaplama
+                // DOĞRU HESAPLAMA: Kalan miktar için gerçek yatırım tutarı
                 if ($total_sold_quantity == 0) {
+                    // Hiç satış yapılmamışsa: Net miktar × Ortalama alış fiyatı
                     $item['invested_value'] = $item['net_miktar'] * $item['avg_buy_price_tl'];
                 } else {
-                    // FIFO mantığı: İlk alınanlar ilk satılır
-                    // Kalan miktar için ağırlıklı ortalama alış fiyatı kullan
-                    $item['invested_value'] = $item['net_miktar'] * $item['avg_buy_price_tl'];
+                    // FIFO mantığı ile doğru hesaplama:
+                    // Toplam alış tutarı - Satılan miktarın maliyeti
+                    $sold_cost = $total_sold_quantity * $item['avg_buy_price_tl'];
+                    $item['invested_value'] = $total_bought_amount - $sold_cost;
+                    
+                    // Negatif değer kontrolü
+                    if ($item['invested_value'] < 0) {
+                        $item['invested_value'] = $item['net_miktar'] * $item['avg_buy_price_tl'];
+                    }
                 }
                 
                 // 3. Kar/Zarar = Mevcut değer - Yatırılan değer
