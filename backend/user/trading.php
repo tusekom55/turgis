@@ -167,7 +167,7 @@ try {
             break;
             
         case 'sell':
-            // DÜZELTME: Coin satma işlemi - Basitleştirilmiş
+            // Coin satma işlemi
             $coin_id = intval($_POST['coin_id'] ?? 0);
             $miktar = floatval($_POST['miktar'] ?? 0);
             $fiyat = floatval($_POST['fiyat'] ?? 0);
@@ -184,7 +184,7 @@ try {
                 exit;
             }
             
-            // DÜZELTME: Kullanıcının bu coin'den sahip olduğu miktarı daha hassas hesapla
+            // Kullanıcının bu coin'den sahip olduğu miktarı hesapla
             $portfolio_sql = "SELECT 
                                 SUM(CASE WHEN islem = 'al' THEN miktar ELSE -miktar END) as net_miktar,
                                 COUNT(*) as transaction_count
@@ -212,7 +212,7 @@ try {
                 exit;
             }
             
-            // DÜZELTME: Hassas miktar kontrolü (floating point precision)
+            // Hassas miktar kontrolü (floating point precision)
             if ($net_miktar < ($miktar - 0.00000001)) {
                 echo json_encode([
                     'success' => false, 
@@ -239,7 +239,7 @@ try {
                 exit;
             }
             
-            // DÜZELTME: Fiyat kontrolü ve TL dönüşümü
+            // Fiyat kontrolü ve TL dönüşümü
             $current_price_tl = floatval($coin['current_price']);
             
             // Fiyat belirtilmemişse veya 0 ise güncel fiyatı kullan
@@ -264,7 +264,7 @@ try {
                 exit;
             }
             
-            // DÜZELTME: Toplam tutar hesaplama
+            // Toplam tutar hesaplama
             $toplam_tutar = $miktar * $fiyat;
             $komisyon = $toplam_tutar * 0.001; // %0.1 komisyon
             $net_tutar = $toplam_tutar - $komisyon;
@@ -280,13 +280,13 @@ try {
             $conn->beginTransaction();
             
             try {
-                // DÜZELTME: Coin satış işlemini kaydet - Net tutarı kullan
+                // Coin satış işlemini kaydet
                 $trade_sql = "INSERT INTO coin_islemleri (user_id, coin_id, islem, miktar, fiyat, tarih) VALUES (?, ?, 'sat', ?, ?, NOW())";
                 $trade_stmt = $conn->prepare($trade_sql);
                 $trade_stmt->execute([$user_id, $coin_id, $miktar, $fiyat]);
                 $trade_id = $conn->lastInsertId();
                 
-                // DÜZELTME: Kullanıcının bakiyesini güncelle - Net tutarı ekle (komisyon düşülmüş)
+                // Kullanıcının bakiyesini güncelle - Net tutarı ekle (komisyon düşülmüş)
                 $update_balance_sql = "UPDATE users SET balance = balance + ? WHERE id = ?";
                 $update_balance_stmt = $conn->prepare($update_balance_sql);
                 $update_balance_stmt->execute([$net_tutar, $user_id]);
@@ -294,7 +294,7 @@ try {
                 // Yeni bakiyeyi hesapla
                 $new_balance = $current_balance + $net_tutar;
                 
-                // DÜZELTME: İşlem geçmişine ekle - Komisyon bilgisi ile
+                // İşlem geçmişine ekle - Komisyon bilgisi ile
                 $history_sql = "INSERT INTO kullanici_islem_gecmisi 
                                (user_id, islem_tipi, islem_detayi, tutar, onceki_bakiye, sonraki_bakiye) 
                                VALUES (?, 'coin_sat', ?, ?, ?, ?)";
@@ -307,7 +307,7 @@ try {
                     $new_balance
                 ]);
                 
-                // DÜZELTME: Log kaydı - Komisyon bilgisi ile
+                // Log kaydı - Komisyon bilgisi ile
                 $log_sql = "INSERT INTO loglar (user_id, tip, detay) VALUES (?, 'coin_islem', ?)";
                 $log_stmt = $conn->prepare($log_sql);
                 $log_stmt->execute([
@@ -317,7 +317,7 @@ try {
                 
                 $conn->commit();
                 
-                // DÜZELTME: Başarılı satış response'u - Komisyon detayları ile
+                // Başarılı satış response'u - Komisyon detayları ile
                 echo json_encode([
                     'success' => true, 
                     'message' => "{$miktar} {$coin['coin_kodu']} başarıyla satıldı (Net: ₺" . number_format($net_tutar, 2) . ")",
@@ -337,7 +337,6 @@ try {
             } catch (Exception $e) {
                 $conn->rollback();
                 error_log("SELL TRANSACTION ERROR: " . $e->getMessage());
-                error_log("SELL PARAMS: user_id={$user_id}, coin_id={$coin_id}, miktar={$miktar}, fiyat={$fiyat}, net_miktar={$net_miktar}");
                 echo json_encode([
                     'success' => false,
                     'message' => 'Satış işlemi sırasında hata oluştu: ' . $e->getMessage(),
@@ -347,9 +346,7 @@ try {
                         'miktar' => $miktar,
                         'fiyat' => $fiyat,
                         'net_miktar' => $net_miktar,
-                        'available_amount' => $net_miktar,
-                        'error' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString()
+                        'error' => $e->getMessage()
                     ]
                 ]);
                 exit;
@@ -357,18 +354,14 @@ try {
             break;
             
         case 'portfolio':
-            // Debug: User ID ve session kontrolü
+            // Portföy listesi - coins.php ile uyumlu
             error_log("Portfolio - User ID: " . ($user_id ?? 'NULL'));
-            error_log("Portfolio - Session: " . print_r($_SESSION, true));
             
             // Test modunda user_id yoksa 1 olarak varsay
             if (!$user_id) {
                 $user_id = 1;
                 error_log("Portfolio - No user_id in session, defaulting to 1 for test mode");
             }
-            
-            // USD/TRY kuru - Sabit kur (gerçek uygulamada API'den çekilmeli)
-            $usd_try_rate = 30.0; // 1 USD = 30 TL (güncel kur için API entegrasyonu yapılabilir)
             
             // Gerekli tabloların varlığını kontrol et
             $required_tables = ['coins', 'coin_islemleri'];
@@ -387,14 +380,25 @@ try {
                 }
             }
             
-                // Kullanıcının portföyünü getir - DÜZELTME: Doğru portföy hesaplaması
-                try {
-                    // FIFO (First In, First Out) mantığı ile doğru ortalama alış fiyatı hesaplaması
+            try {
+                // Önce kullanıcının işlemlerini kontrol et
+                $check_sql = "SELECT COUNT(*) as transaction_count FROM coin_islemleri WHERE user_id = ?";
+                $check_stmt = $conn->prepare($check_sql);
+                $check_stmt->execute([$user_id]);
+                $transaction_count = $check_stmt->fetchColumn();
+                
+                error_log("Portfolio Debug - User {$user_id} has {$transaction_count} transactions");
+                
+                if ($transaction_count == 0) {
+                    // Hiç işlem yoksa boş portföy döndür
+                    $portfolio = [];
+                } else {
+                    // DÜZELTME: coins.php ile aynı portföy hesaplama sistemi
                     $portfolio_sql = "SELECT 
                                         p.*,
                                         c.coin_adi,
                                         c.coin_kodu,
-                                        COALESCE(c.current_price, 0) as current_price_tl,
+                                        COALESCE(c.current_price, 0) as current_price,
                                         COALESCE(c.price_change_24h, 0) as price_change_24h,
                                         'Kripto Para' as kategori_adi
                                       FROM (
@@ -403,20 +407,19 @@ try {
                                             -- Net miktar (alış - satış)
                                             SUM(CASE WHEN ci.islem = 'al' THEN ci.miktar ELSE -ci.miktar END) as net_miktar,
                                             
-                                            -- DÜZELTME: Kalan miktar için doğru ağırlıklı ortalama alış fiyatı
-                                            -- Sadece alış işlemlerinin ağırlıklı ortalaması
+                                            -- Ortalama alış fiyatı (sadece alış işlemlerinin ağırlıklı ortalaması)
                                             CASE 
                                                 WHEN SUM(CASE WHEN ci.islem = 'al' THEN ci.miktar ELSE 0 END) > 0 
                                                 THEN SUM(CASE WHEN ci.islem = 'al' THEN ci.miktar * ci.fiyat ELSE 0 END) / 
                                                      SUM(CASE WHEN ci.islem = 'al' THEN ci.miktar ELSE 0 END)
                                                 ELSE 0 
-                                            END as avg_buy_price_tl,
+                                            END as avg_buy_price,
                                             
-                                            -- Toplam alış tutarı (TL)
+                                            -- Toplam alış tutarı
                                             SUM(CASE WHEN ci.islem = 'al' THEN ci.miktar * ci.fiyat ELSE 0 END) as total_bought_amount,
                                             -- Toplam alış miktarı
                                             SUM(CASE WHEN ci.islem = 'al' THEN ci.miktar ELSE 0 END) as total_bought_quantity,
-                                            -- Toplam satış tutarı (TL)
+                                            -- Toplam satış tutarı
                                             SUM(CASE WHEN ci.islem = 'sat' THEN ci.miktar * ci.fiyat ELSE 0 END) as total_sold_amount,
                                             -- Toplam satış miktarı
                                             SUM(CASE WHEN ci.islem = 'sat' THEN ci.miktar ELSE 0 END) as total_sold_quantity,
@@ -428,27 +431,28 @@ try {
                                         FROM coin_islemleri ci
                                         WHERE ci.user_id = ?
                                         GROUP BY ci.coin_id
-                                        -- DÜZELTME: Daha hassas miktar kontrolü
+                                        -- Sadece pozitif miktarları göster
                                         HAVING SUM(CASE WHEN ci.islem = 'al' THEN ci.miktar ELSE -ci.miktar END) > 0.00000001
                                       ) p
                                       JOIN coins c ON p.coin_id = c.id
                                       WHERE c.is_active = 1
                                       ORDER BY (p.net_miktar * c.current_price) DESC";
-                
-                $portfolio_stmt = $conn->prepare($portfolio_sql);
-                if (!$portfolio_stmt) {
-                    throw new PDOException("SQL prepare failed: " . implode(', ', $conn->errorInfo()));
+            
+                    $portfolio_stmt = $conn->prepare($portfolio_sql);
+                    if (!$portfolio_stmt) {
+                        throw new PDOException("SQL prepare failed: " . implode(', ', $conn->errorInfo()));
+                    }
+                    
+                    $portfolio_stmt->execute([$user_id]);
+                    
+                    // SQL hatası kontrolü
+                    if ($portfolio_stmt->errorCode() !== '00000') {
+                        $error_info = $portfolio_stmt->errorInfo();
+                        throw new PDOException("Portfolio SQL Error: " . $error_info[2]);
+                    }
+                    
+                    $portfolio = $portfolio_stmt->fetchAll(PDO::FETCH_ASSOC);
                 }
-                
-                $portfolio_stmt->execute([$user_id]);
-                
-                // SQL hatası kontrolü
-                if ($portfolio_stmt->errorCode() !== '00000') {
-                    $error_info = $portfolio_stmt->errorInfo();
-                    throw new PDOException("Portfolio SQL Error: " . $error_info[2]);
-                }
-                
-                $portfolio = $portfolio_stmt->fetchAll(PDO::FETCH_ASSOC);
                 
             } catch (PDOException $sql_error) {
                 error_log("Portfolio SQL Error: " . $sql_error->getMessage());
@@ -462,12 +466,6 @@ try {
             }
             
             error_log("Portfolio Result Count: " . count($portfolio));
-            error_log("Portfolio Data: " . json_encode($portfolio));
-            
-            // Portföy boşsa boş portföy döndür (test verisi ekleme)
-            if (empty($portfolio)) {
-                error_log("Portfolio is empty for user {$user_id} - no test data will be added");
-            }
             
             $total_value = 0;
             $total_invested = 0;
@@ -475,94 +473,72 @@ try {
             foreach ($portfolio as &$item) {
                 // Temel değerleri float'a çevir
                 $item['net_miktar'] = floatval($item['net_miktar']);
-                $item['current_price_tl'] = floatval($item['current_price_tl']);
-                $item['avg_buy_price_tl'] = floatval($item['avg_buy_price_tl']) ?: 0;
+                $item['current_price'] = floatval($item['current_price']);
+                $item['avg_buy_price'] = floatval($item['avg_buy_price']) ?: 0;
                 $item['price_change_24h'] = floatval($item['price_change_24h']) ?: 0;
                 $item['total_bought_amount'] = floatval($item['total_bought_amount']) ?: 0;
                 $item['total_sold_amount'] = floatval($item['total_sold_amount']) ?: 0;
                 $item['total_bought_quantity'] = floatval($item['total_bought_quantity']) ?: 0;
                 $item['total_sold_quantity'] = floatval($item['total_sold_quantity']) ?: 0;
                 
-                // Güncel fiyat (TL cinsinden)
-                $item['current_price'] = $item['current_price_tl'];
-                
-                // DÜZELTME: Doğru kar/zarar hesaplaması - FIFO mantığı ile
-                // 1. Mevcut değer = Net miktar × Güncel fiyat
+                // Mevcut değer = Net miktar × Güncel fiyat
                 $item['current_value'] = $item['net_miktar'] * $item['current_price'];
                 
-                // 2. KRITIK DÜZELTME: Gerçek yatırım tutarı hesaplaması - DOĞRU FIFO MANTIGI
-                $remaining_quantity = $item['net_miktar'];
-                $total_bought_amount = $item['total_bought_amount'];
-                $total_sold_amount = $item['total_sold_amount'];
-                $total_bought_quantity = $item['total_bought_quantity'];
-                $total_sold_quantity = $item['total_sold_quantity'];
-                
-                // DOĞRU HESAPLAMA: Kalan miktar için gerçek yatırım tutarı
-                if ($total_sold_quantity == 0) {
+                // DÜZELTME: Doğru yatırım tutarı hesaplaması
+                if ($item['total_sold_quantity'] == 0) {
                     // Hiç satış yapılmamışsa: Net miktar × Ortalama alış fiyatı
-                    $item['invested_value'] = $item['net_miktar'] * $item['avg_buy_price_tl'];
+                    $item['invested_value'] = $item['net_miktar'] * $item['avg_buy_price'];
                 } else {
-                    // FIFO mantığı ile doğru hesaplama:
-                    // Toplam alış tutarı - Satılan miktarın maliyeti
-                    $sold_cost = $total_sold_quantity * $item['avg_buy_price_tl'];
-                    $item['invested_value'] = $total_bought_amount - $sold_cost;
+                    // FIFO mantığı ile: Kalan miktar için gerçek yatırım tutarı
+                    $sold_cost = $item['total_sold_quantity'] * $item['avg_buy_price'];
+                    $item['invested_value'] = $item['total_bought_amount'] - $sold_cost;
                     
                     // Negatif değer kontrolü
                     if ($item['invested_value'] < 0) {
-                        $item['invested_value'] = $item['net_miktar'] * $item['avg_buy_price_tl'];
+                        $item['invested_value'] = $item['net_miktar'] * $item['avg_buy_price'];
                     }
                 }
                 
-                // 3. Kar/Zarar = Mevcut değer - Yatırılan değer
+                // Kar/Zarar = Mevcut değer - Yatırılan değer
                 $item['profit_loss'] = $item['current_value'] - $item['invested_value'];
                 
-                // 4. Kar/Zarar yüzdesi - DÜZELTME: Sıfır bölme kontrolü
+                // Kar/Zarar yüzdesi
                 if ($item['invested_value'] > 0) {
                     $item['profit_loss_percent'] = ($item['profit_loss'] / $item['invested_value']) * 100;
                 } else {
                     $item['profit_loss_percent'] = 0;
                 }
                 
-                // 5. EKSTRA KONTROL: Negatif değerleri düzelt
+                // Negatif değerleri düzelt
                 if ($item['current_value'] < 0) $item['current_value'] = 0;
                 if ($item['invested_value'] < 0) $item['invested_value'] = 0;
                 
-                // 5. Ortalama alış fiyatını da TL olarak ayarla
-                $item['avg_buy_price'] = $item['avg_buy_price_tl'];
-                
-                // 6. Ek bilgiler
+                // Ek bilgiler
                 $item['kategori_adi'] = $item['kategori_adi'] ?: 'Diğer';
                 $item['transaction_count'] = intval($item['transaction_count']);
-                
-                // 7. Para birimi bilgisi
                 $item['currency'] = 'TRY';
-                $item['usd_try_rate'] = $usd_try_rate;
                 
-                // 8. Formatlanmış değerler
+                // Formatlanmış değerler
                 $item['current_value_formatted'] = number_format($item['current_value'], 2, '.', ',');
                 $item['invested_value_formatted'] = number_format($item['invested_value'], 2, '.', ',');
                 $item['profit_loss_formatted'] = ($item['profit_loss'] >= 0 ? '+' : '') . number_format($item['profit_loss'], 2, '.', ',');
                 
-                // 9. Toplam değerleri hesapla
+                // Toplam değerleri hesapla
                 $total_value += $item['current_value'];
                 $total_invested += $item['invested_value'];
                 
-                // 10. Debug log - Geliştirilmiş
-                error_log("Portfolio Item FIXED - {$item['coin_kodu']}: " .
-                         "Net Amount: {$item['net_miktar']}, " .
-                         "Current Price TL: {$item['current_price']}, " .
-                         "Avg Buy Price TL: {$item['avg_buy_price_tl']}, " .
+                // Debug log
+                error_log("Portfolio Item - {$item['coin_kodu']}: " .
+                         "Net: {$item['net_miktar']}, " .
+                         "Current Price: {$item['current_price']}, " .
+                         "Avg Buy Price: {$item['avg_buy_price']}, " .
                          "Current Value: {$item['current_value']}, " .
-                         "Invested Value (Fixed): {$item['invested_value']}, " .
-                         "P/L (Fixed): {$item['profit_loss']} ({$item['profit_loss_percent']}%), " .
-                         "Total Bought: {$item['total_bought_amount']}, " .
-                         "Total Sold: {$item['total_sold_amount']}");
+                         "Invested: {$item['invested_value']}, " .
+                         "P/L: {$item['profit_loss']} ({$item['profit_loss_percent']}%)");
             }
             
             $total_profit_loss = $total_value - $total_invested;
             $total_profit_loss_percent = $total_invested > 0 ? (($total_profit_loss / $total_invested) * 100) : 0;
-            
-            error_log("Portfolio Summary Debug - Total Value: {$total_value}, Total Invested: {$total_invested}, Total P/L: {$total_profit_loss}, P/L %: {$total_profit_loss_percent}");
             
             echo json_encode([
                 'success' => true,
@@ -574,8 +550,7 @@ try {
                         'total_profit_loss' => $total_profit_loss,
                         'total_profit_loss_percent' => $total_profit_loss_percent,
                         'coin_count' => count($portfolio),
-                        'currency' => 'TRY',
-                        'usd_try_rate' => $usd_try_rate
+                        'currency' => 'TRY'
                     ]
                 ]
             ]);
@@ -638,9 +613,6 @@ try {
             
         default:
             error_log("UNKNOWN ACTION: " . $action);
-            error_log("REQUEST METHOD: " . $_SERVER['REQUEST_METHOD']);
-            error_log("GET PARAMS: " . print_r($_GET, true));
-            error_log("POST PARAMS: " . print_r($_POST, true));
             echo json_encode([
                 'success' => false, 
                 'message' => 'Geçersiz işlem: ' . $action,
