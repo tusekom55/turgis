@@ -5,10 +5,11 @@
 
 session_start();
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../auth.php';
 require_once __DIR__ . '/../utils/price_manager.php';
 
-// Admin kontrolü
-if (!isset($_SESSION['admin_id'])) {
+// Admin kontrolü - mevcut auth sistemini kullan
+if (!is_logged_in() || !is_admin()) {
     header('Location: ../admin-login.html');
     exit;
 }

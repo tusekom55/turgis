@@ -1309,12 +1309,36 @@
 
         // Initialize admin panel
         document.addEventListener('DOMContentLoaded', function() {
-            // Test modu - session kontrolü olmadan
-            console.log('Admin panel test modunda çalışıyor');
+            // Session kontrolü yap
+            checkAdminSession();
             loadDashboard();
             setupNavigation();
             setupCoinForm();
         });
+
+        // Admin session kontrolü
+        async function checkAdminSession() {
+            try {
+                const response = await fetch('backend/admin/check_session.php');
+                const data = await response.json();
+                
+                if (!data.success || !data.is_admin) {
+                    // Admin değilse login sayfasına yönlendir
+                    window.location.href = 'admin-login.html';
+                    return;
+                }
+                
+                // Admin bilgilerini güncelle
+                if (data.admin_info) {
+                    document.querySelector('.admin-info span').textContent = data.admin_info.username || 'Admin';
+                }
+                
+            } catch (error) {
+                console.error('Session check error:', error);
+                // Hata durumunda login sayfasına yönlendir
+                window.location.href = 'admin-login.html';
+            }
+        }
 
         // Navigation setup
         function setupNavigation() {

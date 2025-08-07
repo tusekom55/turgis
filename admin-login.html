@@ -221,7 +221,7 @@
                 formData.append('username', username);
                 formData.append('password', password);
 
-                const response = await fetch('backend/admin/login.php', {
+                const response = await fetch('backend/public/login.php', {
                     method: 'POST',
                     body: formData
                 });
@@ -258,4 +258,4 @@
         });
     </script>
 </body>
-</html> 
+</html>
