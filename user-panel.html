@@ -10019,7 +10019,7 @@
             }
         }
 
-        // Modal coin icon'unu dinamik olarak güncelle - GERÇEK LOGOLARLA (DÜZELTME: Arka plan temizleme)
+        // Modal coin icon'unu dinamik olarak güncelle - GERÇEK LOGOLARLA (DÜZELTME: Eski tasarımı koruyarak)
         function updateModalCoinIcon(coinSymbol) {
             const modalCoinIconContainer = document.querySelector('.coin-icon-container');
             if (!modalCoinIconContainer) return;
@@ -10067,34 +10067,29 @@
             };
             
             // Logo URL'ini belirle
-            const logoUrl = coinLogos[coinSymbol] || `https://via.placeholder.com/56/4fc3f7/ffffff?text=${coinSymbol.charAt(0)}`;
+            const logoUrl = coinLogos[coinSymbol];
             
-            // DÜZELTME: Arka plan temizleme ve doğru positioning
-            modalCoinIconContainer.style.background = 'transparent';
-            modalCoinIconContainer.style.backgroundImage = 'none';
+            if (logoUrl) {
+                // Gerçek logo varsa, img elementi ile değiştir (eski tasarımı koruyarak)
+                modalCoinIconContainer.innerHTML = `
+                    <img src="${logoUrl}" 
+                         alt="${coinSymbol}" 
+                         style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;"
+                         onerror="this.parentNode.innerHTML='<i class=\\"fab fa-bitcoin\\" style=\\"font-size: 24px; color: white;\\"></i>'">
+                `;
+            } else {
+                // Gerçek logo yoksa, eski FontAwesome ikonunu kullan
+                const iconMap = {
+                    'BTC': 'fab fa-bitcoin',
+                    'ETH': 'fab fa-ethereum',
+                    'LTC': 'fab fa-bitcoin',
+                    'BCH': 'fab fa-bitcoin'
+                };
+                const iconClass = iconMap[coinSymbol] || 'fas fa-coins';
+                modalCoinIconContainer.innerHTML = `<i class="${iconClass}" style="font-size: 24px; color: white;"></i>`;
+            }
             
-            // Mevcut içeriği TAMAMEN temizle (eski ikonları da dahil)
-            modalCoinIconContainer.innerHTML = '';
-            
-            // Yeni img elementi ekle - tam boyut ve merkezi konumlandırma
-            modalCoinIconContainer.innerHTML = `
-                <img src="${logoUrl}" 
-                     alt="${coinSymbol}" 
-                     style="
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        width: 100%; 
-                        height: 100%; 
-                        border-radius: 50%; 
-                        object-fit: cover;
-                        z-index: 10;
-                        background: transparent;
-                     "
-                     onerror="this.style.display='none'; this.parentNode.innerHTML='<i class=\\"fas fa-coins\\" style=\\"font-size: 24px; color: white; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10;\\"></i>'">
-            `;
-            
-            console.log(`🎨 Modal logo güncellendi (arka plan temizlendi): ${coinSymbol} -> ${logoUrl}`);
+            console.log(`🎨 Modal logo güncellendi (tasarım korundu): ${coinSymbol} -> ${logoUrl || 'FontAwesome icon'}`);
         }
 
         // Enhanced Trading modalını kapat
