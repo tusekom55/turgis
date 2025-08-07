@@ -13,7 +13,7 @@ echo "<p>Miktar: {$miktar}</p>";
 echo "<p>Fiyat: {$fiyat}</p>";
 
 // API URL
-$url = 'http://localhost/backend/user/trading.php?action=sell';
+$url = 'https://silver-eland-900684.hostingersite.com/backend/user/trading.php?action=sell';
 
 // POST verisi
 $postdata = http_build_query([

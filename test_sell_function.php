@@ -75,7 +75,7 @@ try {
             echo "<p>Toplam tutar: ₺{$toplam_tutar}</p>";
             
             // Gerçek satış API'sini test et
-            $url = 'http://localhost/backend/user/trading.php?action=sell';
+            $url = 'https://silver-eland-900684.hostingersite.com/backend/user/trading.php?action=sell';
             $data = [
                 'coin_id' => $coin_id,
                 'miktar' => $miktar,
