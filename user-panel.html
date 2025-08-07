@@ -9552,6 +9552,9 @@
             document.getElementById('modalCoinSymbol').textContent = symbol;
             document.getElementById('modalCoinPrice').textContent = `₺${priceInTL.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
             
+            // DÜZELTME: Modal coin icon'unu dinamik olarak ayarla
+            updateModalCoinIcon(symbol);
+            
             // Price change göster
             const changeElement = document.getElementById('modalCoinChange');
             const change = (Math.random() - 0.5) * 10; // Random değişim %
@@ -10014,6 +10017,62 @@
                 executeBtn.disabled = false;
                 executeText.textContent = originalText;
             }
+        }
+
+        // Modal coin icon'unu dinamik olarak güncelle
+        function updateModalCoinIcon(coinSymbol) {
+            const modalCoinIcon = document.getElementById('modalCoinIcon');
+            if (!modalCoinIcon) return;
+            
+            // Coin'e özel icon'lar
+            const coinIcons = {
+                'BTC': 'fab fa-bitcoin',
+                'ETH': 'fab fa-ethereum', 
+                'BNB': 'fas fa-coins',
+                'ADA': 'fas fa-heart',
+                'SOL': 'fas fa-sun',
+                'XRP': 'fas fa-water',
+                'DOT': 'fas fa-circle',
+                'DOGE': 'fas fa-dog',
+                'AVAX': 'fas fa-mountain',
+                'SHIB': 'fas fa-paw',
+                'LINK': 'fas fa-link',
+                'TRX': 'fas fa-bolt',
+                'MATIC': 'fas fa-polygon',
+                'LTC': 'fab fa-litecoin-sign',
+                'BCH': 'fab fa-bitcoin',
+                'UNI': 'fas fa-unicorn',
+                'ATOM': 'fas fa-atom',
+                'XLM': 'fas fa-star',
+                'VET': 'fas fa-check-circle',
+                'FIL': 'fas fa-file',
+                'THETA': 'fas fa-play-circle',
+                'ICP': 'fas fa-infinity',
+                'ALGO': 'fas fa-algorithm',
+                'XTZ': 'fas fa-cube',
+                'EGLD': 'fas fa-crown',
+                'AAVE': 'fas fa-university',
+                'EOS': 'fas fa-globe',
+                'XMR': 'fas fa-eye-slash',
+                'MANA': 'fas fa-vr-cardboard',
+                'SAND': 'fas fa-cube',
+                'CRO': 'fas fa-credit-card',
+                'NEAR': 'fas fa-compass',
+                'APE': 'fas fa-monkey',
+                'LDO': 'fas fa-shield-alt',
+                'USDT': 'fas fa-dollar-sign',
+                'USDC': 'fas fa-dollar-sign',
+                'BUSD': 'fas fa-dollar-sign',
+                'DAI': 'fas fa-dollar-sign'
+            };
+            
+            // Icon class'ını belirle
+            const iconClass = coinIcons[coinSymbol] || 'fas fa-coins';
+            
+            // Icon'u güncelle
+            modalCoinIcon.className = iconClass;
+            
+            console.log(`🎨 Modal icon güncellendi: ${coinSymbol} -> ${iconClass}`);
         }
 
         // Enhanced Trading modalını kapat
