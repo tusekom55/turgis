@@ -10019,7 +10019,7 @@
             }
         }
 
-        // Modal coin icon'unu dinamik olarak güncelle - GERÇEK LOGOLARLA
+        // Modal coin icon'unu dinamik olarak güncelle - GERÇEK LOGOLARLA (DÜZELTME: Arka plan temizleme)
         function updateModalCoinIcon(coinSymbol) {
             const modalCoinIconContainer = document.querySelector('.coin-icon-container');
             if (!modalCoinIconContainer) return;
@@ -10069,15 +10069,32 @@
             // Logo URL'ini belirle
             const logoUrl = coinLogos[coinSymbol] || `https://via.placeholder.com/56/4fc3f7/ffffff?text=${coinSymbol.charAt(0)}`;
             
-            // Mevcut içeriği temizle ve img elementi ekle
+            // DÜZELTME: Arka plan temizleme ve doğru positioning
+            modalCoinIconContainer.style.background = 'transparent';
+            modalCoinIconContainer.style.backgroundImage = 'none';
+            
+            // Mevcut içeriği TAMAMEN temizle (eski ikonları da dahil)
+            modalCoinIconContainer.innerHTML = '';
+            
+            // Yeni img elementi ekle - tam boyut ve merkezi konumlandırma
             modalCoinIconContainer.innerHTML = `
                 <img src="${logoUrl}" 
                      alt="${coinSymbol}" 
-                     style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;"
-                     onerror="this.style.display='none'; this.parentNode.innerHTML='<i class=\\"fas fa-coins\\" style=\\"font-size: 24px; color: white;\\"></i>'">
+                     style="
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%; 
+                        height: 100%; 
+                        border-radius: 50%; 
+                        object-fit: cover;
+                        z-index: 10;
+                        background: transparent;
+                     "
+                     onerror="this.style.display='none'; this.parentNode.innerHTML='<i class=\\"fas fa-coins\\" style=\\"font-size: 24px; color: white; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10;\\"></i>'">
             `;
             
-            console.log(`🎨 Modal logo güncellendi: ${coinSymbol} -> ${logoUrl}`);
+            console.log(`🎨 Modal logo güncellendi (arka plan temizlendi): ${coinSymbol} -> ${logoUrl}`);
         }
 
         // Enhanced Trading modalını kapat
