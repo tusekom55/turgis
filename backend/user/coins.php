@@ -97,10 +97,8 @@ try {
             $coin['price_change_24h'] = floatval($coin['price_change_24h']);
             $coin['currency'] = 'TRY';
             
-            // Logo URL'si yoksa varsayılan ekle
-            if (empty($coin['logo_url'])) {
-                $coin['logo_url'] = 'https://via.placeholder.com/32x32/007bff/ffffff?text=' . substr($coin['coin_kodu'], 0, 2);
-            }
+            // Logo URL'si varsayılan olarak ekle
+            $coin['logo_url'] = 'https://via.placeholder.com/32x32/007bff/ffffff?text=' . substr($coin['coin_kodu'], 0, 2);
             
             // Kategori adını coin tipine göre ayarla
             if ($coin['coin_type'] === 'manual') {
@@ -162,10 +160,8 @@ try {
         $coin['price_change_24h'] = floatval($coin['price_change_24h']);
         $coin['currency'] = 'TRY';
         
-        // Logo URL'si yoksa varsayılan ekle
-        if (empty($coin['logo_url'])) {
-            $coin['logo_url'] = 'https://via.placeholder.com/32x32/007bff/ffffff?text=' . substr($coin['coin_kodu'], 0, 2);
-        }
+        // Logo URL'si varsayılan olarak ekle
+        $coin['logo_url'] = 'https://via.placeholder.com/32x32/007bff/ffffff?text=' . substr($coin['coin_kodu'], 0, 2);
         
         // Kategori adını coin tipine göre ayarla
         if ($coin['coin_type'] === 'manual') {

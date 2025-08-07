@@ -8015,19 +8015,26 @@
             loadUserInfo();
             setupNavigation();
             setupDepositForm(); // Para yatırma formunu başlat
-            refreshMarketData(); // Sayfa yüklendiğinde piyasaları yükle
+            
+            // Market initialization'ı geciktir
+            setTimeout(() => {
+                refreshMarketData(); // Sayfa yüklendiğinde piyasaları yükle
+            }, 1000);
+            
             initTrading(); // Trading sistemini başlat
             refreshPositions(); // Pozisyonları yükle
             
-            // Arama kutusu için event listener
+            // Arama kutusu için event listener - null check ekle
             const searchInput = document.getElementById('coinSearch');
-            let searchTimeout;
-            searchInput.addEventListener('input', function() {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    refreshMarketData();
-                }, 500); // 500ms gecikme ile arama yap
-            });
+            if (searchInput) {
+                let searchTimeout;
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        refreshMarketData();
+                    }, 500); // 500ms gecikme ile arama yap
+                });
+            }
         });
 
         // Navigasyon sistemi

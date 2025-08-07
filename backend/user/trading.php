@@ -394,7 +394,6 @@ try {
                                         p.*,
                                         c.coin_adi,
                                         c.coin_kodu,
-                                        COALESCE(c.logo_url, '') as logo_url,
                                         COALESCE(c.current_price, 0) as current_price_tl,
                                         COALESCE(c.price_change_24h, 0) as price_change_24h,
                                         COALESCE(c.kategori_id, 1) as kategori_id,
