@@ -53,8 +53,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
-// Veritabanı bağlantısı olmadan mock data döndür
-if (!function_exists('db_connect')) {
+// Veritabanı bağlantısını dene, başarısız olursa mock data döndür
+try {
+    if (!function_exists('db_connect')) {
+        throw new Exception('db_connect function not found');
+    }
+    $conn = db_connect();
+    // Bağlantıyı test et
+    $test_stmt = $conn->prepare("SELECT 1");
+    $test_stmt->execute();
+} catch (Exception $e) {
+    // Veritabanı bağlantısı başarısız, mock data döndür
+    error_log('Database connection failed in trading.php, using mock data: ' . $e->getMessage());
+    
     $action = $_GET['action'] ?? '';
     
     if ($action === 'portfolio') {

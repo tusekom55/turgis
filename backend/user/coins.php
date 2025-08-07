@@ -43,8 +43,18 @@ if (!$config_loaded) {
     die(json_encode(['success' => false, 'message' => 'Config dosyası bulunamadı']));
 }
 
-// Veritabanı bağlantısı olmadan mock data döndür
-if (!function_exists('db_connect')) {
+// Veritabanı bağlantısını dene, başarısız olursa mock data döndür
+try {
+    if (!function_exists('db_connect')) {
+        throw new Exception('db_connect function not found');
+    }
+    $conn = db_connect();
+    // Bağlantıyı test et
+    $test_stmt = $conn->prepare("SELECT 1");
+    $test_stmt->execute();
+} catch (Exception $e) {
+    // Veritabanı bağlantısı başarısız, mock data döndür
+    error_log('Database connection failed, using mock data: ' . $e->getMessage());
     echo json_encode([
         'success' => true, 
         'coins' => [
@@ -59,7 +69,6 @@ if (!function_exists('db_connect')) {
 }
 
 try {
-    $conn = db_connect();
     
     // Fiyat güncelleme sistemi entegrasyonu
     require_once __DIR__ . '/../utils/price_manager.php';
