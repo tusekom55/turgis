@@ -2043,7 +2043,7 @@
              margin-top: 16px;
          }
          
-                         /* Mobile Responsive Styles */
+        /* Mobile Responsive Styles */
         /* Desktop and Tablet Responsive */
         @media (min-width: 769px) {
             /* Desktop Coins Grid Styles */
@@ -2089,17 +2089,62 @@
         }
         
         @media (max-width: 768px) {
+            /* Mobil Sidebar Düzenlemeleri */
             .sidebar {
                 transform: translateX(-100%);
                 transition: transform 0.3s ease;
                 z-index: 1001;
-                width: 280px;
+                width: 100%;
+                max-width: 320px;
+                height: 100vh;
+                overflow-y: auto;
+                padding: 0;
             }
             
             .sidebar.mobile-open {
                 transform: translateX(0);
             }
             
+            /* Mobil Sidebar Header */
+            .sidebar-header {
+                padding: 20px 20px 20px 20px;
+                border-bottom: 1px solid #2a2f3e;
+                margin-bottom: 0;
+                background: linear-gradient(135deg, #1e2742 0%, #2a3f5f 100%);
+            }
+            
+            .logo {
+                font-size: 24px;
+                margin-bottom: 0;
+            }
+            
+            /* Mobil Nav Menu */
+            .nav-menu {
+                padding: 10px 0;
+                max-height: calc(100vh - 120px);
+                overflow-y: auto;
+            }
+            
+            .nav-item {
+                margin-bottom: 2px;
+            }
+            
+            .nav-link {
+                padding: 16px 20px;
+                margin: 2px 10px;
+                border-radius: 10px;
+                font-size: 15px;
+                display: flex;
+                align-items: center;
+                gap: 14px;
+            }
+            
+            .nav-link i {
+                width: 20px;
+                font-size: 16px;
+            }
+            
+            /* Mobile Overlay */
             .mobile-overlay {
                 display: none;
                 position: fixed;
@@ -2116,69 +2161,123 @@
                 display: block;
             }
             
+            /* Main Content Mobil */
             .main-content {
                 margin-left: 0;
+                width: 100%;
             }
             
-            .content-area {
-                padding: 16px;
-            }
-            
+            /* Top Bar Mobil */
             .top-bar {
-                padding: 16px 20px;
+                padding: 12px 16px;
+                position: sticky;
+                top: 0;
+                z-index: 100;
+            }
+            
+            .top-bar-left {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            
+            .mobile-menu-btn {
+                display: flex !important;
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                color: #ffffff;
+                padding: 8px;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                width: 40px;
+                height: 40px;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .mobile-menu-btn:hover {
+                background: rgba(255, 255, 255, 0.2);
+                transform: scale(1.05);
             }
             
             .page-title {
-                font-size: 24px;
+                font-size: 20px;
+                font-weight: 600;
+            }
+            
+            .top-bar-right {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-wrap: nowrap;
             }
             
             .balance-display {
-                padding: 10px 16px;
-                font-size: 14px;
-            }
-            
-            .user-avatar {
-                width: 40px;
-                height: 40px;
-                font-size: 16px;
+                padding: 8px 12px;
+                font-size: 12px;
+                height: 32px;
+                white-space: nowrap;
+                border-radius: 8px;
             }
             
             .logout-btn {
-                padding: 10px 16px;
-                font-size: 14px;
+                padding: 8px 12px;
+                font-size: 12px;
+                height: 32px;
+                white-space: nowrap;
+                border-radius: 8px;
             }
             
-            .card {
-                padding: 20px;
-                margin-bottom: 16px;
+            /* Content Area Mobil */
+            .content-area {
+                padding: 12px;
+            }
+            
+            .section-header {
+                margin-bottom: 20px;
             }
             
             .section-title {
-                font-size: 28px;
+                font-size: 24px;
+                margin-bottom: 8px;
             }
             
+            .section-subtitle {
+                font-size: 14px;
+            }
+            
+            /* Card Mobil */
+            .card {
+                padding: 16px;
+                margin-bottom: 12px;
+                border-radius: 12px;
+            }
+            
+            .card-header {
+                padding: 0 0 12px 0;
+                margin-bottom: 16px;
+            }
+            
+            .card-title {
+                font-size: 18px;
+            }
+            
+            /* Grid Mobil */
             .grid {
-                gap: 16px;
+                gap: 12px;
             }
             
             .grid-2, .grid-3 {
                 grid-template-columns: 1fr;
             }
-           
-           .card {
-               margin: 0 !important;
-               border-radius: 12px !important;
-           }
-           
-           .card-header {
-               padding: 16px !important;
-           }
-           
-           .market-controls {
-               flex-direction: column !important;
-               gap: 12px !important;
-               align-items: stretch !important;
-           }
+            
+            /* Market Controls Mobil */
+            .market-controls {
+                flex-direction: column !important;
+                gap: 12px !important;
+                align-items: stretch !important;
+            }
            
                    /* Modern Trading Modal Styles */
         .modern-trading-modal {
