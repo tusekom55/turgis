@@ -8847,33 +8847,82 @@
             }
         }
         
-        // Portföy verilerini göster
+        // Portföy verilerini göster - DÜZELTME: Geliştirilmiş portföy görüntüleme
         function displayPortfolio(data) {
+            console.log('📊 ENHANCED Portfolio Display başlatılıyor:', data);
+            
             const loader = document.getElementById('portfolioLoader');
             const cardsContainer = document.getElementById('portfolioCards');
             const tableContainer = document.getElementById('portfolioTable');
             const tbody = document.getElementById('portfolioTableBody');
+            const empty = document.getElementById('portfolioEmpty');
             
             // Loading'i gizle
-            loader.style.display = 'none';
+            if (loader) loader.style.display = 'none';
             
-            // Özet bilgilerini güncelle
-            const summary = data.summary;
-            updatePortfolioSummary(summary, data.portfolio);
+            // Veri kontrolü - DÜZELTME: Daha kapsamlı kontrol
+            if (!data || !data.portfolio || !Array.isArray(data.portfolio)) {
+                console.warn('⚠️ Portfolio data eksik veya geçersiz:', data);
+                if (empty) empty.style.display = 'block';
+                return;
+            }
             
-            // Kart görünümü oluştur
-            displayPortfolioCards(data.portfolio, cardsContainer);
+            const portfolio = data.portfolio;
+            const summary = data.summary || {};
             
-            // Tablo görünümü oluştur
-            displayPortfolioTable(data.portfolio, tbody);
+            console.log(`📈 ${portfolio.length} portföy öğesi işleniyor`);
+            
+            // Portföy boş mu kontrolü
+            if (portfolio.length === 0) {
+                console.log('📭 Portföy boş, empty state gösteriliyor');
+                if (empty) empty.style.display = 'block';
+                if (cardsContainer) cardsContainer.style.display = 'none';
+                if (tableContainer) tableContainer.style.display = 'none';
+                
+                // Sıfır değerleri göster
+                updatePortfolioSummaryToZero();
+                return;
+            }
+            
+            // Empty state'i gizle
+            if (empty) empty.style.display = 'none';
+            
+            // DÜZELTME: Portföy verilerini doğrula ve düzelt
+            const validatedPortfolio = validateAndFixPortfolioData(portfolio);
+            console.log('✅ Portföy verileri doğrulandı:', validatedPortfolio.length, 'geçerli öğe');
+            
+            // Özet bilgilerini güncelle - DÜZELTME: Geliştirilmiş hesaplama
+            updateEnhancedPortfolioSummary(summary, validatedPortfolio);
+            
+            // Kart görünümü oluştur - DÜZELTME: Geliştirilmiş kartlar
+            displayEnhancedPortfolioCards(validatedPortfolio, cardsContainer);
+            
+            // Tablo görünümü oluştur - DÜZELTME: Geliştirilmiş tablo
+            displayEnhancedPortfolioTable(validatedPortfolio, tbody);
             
             // Aktif görünümü göster
             togglePortfolioView(currentPortfolioView);
             
-            // Başarı mesajı göster
-            if (typeof showNotification === 'function') {
-                showNotification(`Portföy yüklendi: ${summary.coin_count} farklı varlık`, 'success');
+            // DÜZELTME: Başarı mesajı - daha bilgilendirici
+            const totalValue = summary.total_value || 0;
+            const profitLoss = summary.total_profit_loss || 0;
+            const profitLossPercent = summary.total_profit_loss_percent || 0;
+            
+            let statusMessage = `📊 Portföy yüklendi: ${validatedPortfolio.length} varlık`;
+            if (totalValue > 0) {
+                statusMessage += ` • Toplam: ₺${totalValue.toLocaleString('tr-TR')}`;
             }
+            if (Math.abs(profitLossPercent) > 0.01) {
+                const pnlSign = profitLoss >= 0 ? '+' : '';
+                statusMessage += ` • K/Z: ${pnlSign}${profitLossPercent.toFixed(2)}%`;
+            }
+            
+            if (typeof showNotification === 'function') {
+                showNotification(statusMessage, 'success');
+            }
+            
+            // DÜZELTME: Portföy sağlık kontrolü
+            performPortfolioHealthCheck(validatedPortfolio, summary);
         }
         
         // Portföy özet kartlarını güncelle
@@ -10483,116 +10532,156 @@
 
         // Desktop coin kartları render et
         function renderDesktopCoins(coins, container) {
+            console.log('🖥️ Desktop coinleri render ediliyor:', coins.length, 'coin');
             container.innerHTML = '';
             
+            if (!coins || coins.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #8896ab;">Coin bulunamadı</div>';
+                return;
+            }
+            
             coins.forEach((coin, index) => {
-                const priceChangeClass = coin.price_change_24h >= 0 ? 'positive' : 'negative';
-                const priceChangeIcon = coin.price_change_24h >= 0 ? '▲' : '▼';
-                const logoUrl = coin.logo_url || `https://via.placeholder.com/48/4fc3f7/ffffff?text=${coin.coin_kodu.charAt(0)}`;
-                
-                        const card = document.createElement('div');
-                        card.className = 'desktop-coin-card';
-                        card.onclick = () => openTradingModal(coin.id, coin.coin_adi, coin.current_price, 'buy', coin.coin_kodu);
-                        
-                        card.innerHTML = `
-                            <div class="coin-card-header">
-                                <div class="coin-info">
-                                    <div class="coin-logo">
-                                        <img src="${logoUrl}" alt="${coin.coin_adi}" 
-                                             onerror="this.style.display='none'; this.parentNode.textContent='${coin.coin_kodu.charAt(0)}'">
-                                    </div>
-                                    <div class="coin-details">
-                                        <h4>${coin.coin_adi}</h4>
-                                        <span class="coin-symbol">${coin.coin_kodu}</span>
-                                    </div>
+                try {
+                    const priceChangeClass = parseFloat(coin.price_change_24h) >= 0 ? 'positive' : 'negative';
+                    const priceChangeIcon = parseFloat(coin.price_change_24h) >= 0 ? '▲' : '▼';
+                    const logoUrl = coin.logo_url || `https://via.placeholder.com/48/4fc3f7/ffffff?text=${coin.coin_kodu.charAt(0)}`;
+                    
+                    // Fiyat formatlaması - TL cinsinden
+                    const currentPrice = parseFloat(coin.current_price) || 0;
+                    const priceChange = parseFloat(coin.price_change_24h) || 0;
+                    const marketCap = parseFloat(coin.market_cap) || 0;
+                    
+                    const card = document.createElement('div');
+                    card.className = 'desktop-coin-card';
+                    card.onclick = () => openTradingModal(coin.id, coin.coin_adi, currentPrice, 'buy', coin.coin_kodu);
+                    
+                    card.innerHTML = `
+                        <div class="coin-card-header">
+                            <div class="coin-info">
+                                <div class="coin-logo">
+                                    <img src="${logoUrl}" alt="${coin.coin_adi}" 
+                                         onerror="this.style.display='none'; this.parentNode.textContent='${coin.coin_kodu.charAt(0)}'">
                                 </div>
-                                <div class="coin-price">
-                                    <div class="price">₺${parseFloat(coin.current_price).toLocaleString('tr-TR', { 
-                                        minimumFractionDigits: 2, 
-                                        maximumFractionDigits: 2 
-                                    })}</div>
-                                    <div class="rank">#${index + 1}</div>
+                                <div class="coin-details">
+                                    <h4>${coin.coin_adi}</h4>
+                                    <span class="coin-symbol">${coin.coin_kodu}</span>
                                 </div>
                             </div>
-                    
-                    <div class="coin-stats">
-                        <div class="price-change ${priceChangeClass}">
-                            <i class="fas fa-${coin.price_change_24h >= 0 ? 'arrow-up' : 'arrow-down'}"></i>
-                            ${parseFloat(coin.price_change_24h).toFixed(2)}%
+                            <div class="coin-price">
+                                <div class="price">₺${currentPrice.toLocaleString('tr-TR', { 
+                                    minimumFractionDigits: 2, 
+                                    maximumFractionDigits: 2 
+                                })}</div>
+                                <div class="rank">#${index + 1}</div>
+                            </div>
                         </div>
-                        <div class="volume-info">
-                            Piyasa Değeri: $${coin.market_cap ? (parseInt(coin.market_cap) / 1000000).toFixed(1) + 'M' : 'N/A'}
-                        </div>
-                    </div>
-                    
-                    <div class="coin-actions">
-                        <button class="trade-btn buy" onclick="event.stopPropagation(); openTradingModal('${coin.id}', '${coin.coin_adi}', '${coin.current_price}', 'buy', '${coin.coin_kodu}')">
-                            <i class="fas fa-arrow-up"></i> Alış
-                        </button>
-                        <button class="trade-btn sell" onclick="event.stopPropagation(); openTradingModal('${coin.id}', '${coin.coin_adi}', '${coin.current_price}', 'sell', '${coin.coin_kodu}')">
-                            <i class="fas fa-arrow-down"></i> Satış
-                        </button>
-                    </div>
-                `;
                 
-                container.appendChild(card);
+                        <div class="coin-stats">
+                            <div class="price-change ${priceChangeClass}">
+                                <i class="fas fa-${priceChange >= 0 ? 'arrow-up' : 'arrow-down'}"></i>
+                                ${priceChange.toFixed(2)}%
+                            </div>
+                            <div class="volume-info">
+                                Piyasa Değeri: ₺${marketCap > 0 ? (marketCap / 1000000000).toFixed(1) + 'B' : 'N/A'}
+                            </div>
+                        </div>
+                        
+                        <div class="coin-actions">
+                            <button class="trade-btn buy" onclick="event.stopPropagation(); openTradingModal('${coin.id}', '${coin.coin_adi}', '${currentPrice}', 'buy', '${coin.coin_kodu}')">
+                                <i class="fas fa-arrow-up"></i> Alış
+                            </button>
+                            <button class="trade-btn sell" onclick="event.stopPropagation(); openTradingModal('${coin.id}', '${coin.coin_adi}', '${currentPrice}', 'sell', '${coin.coin_kodu}')">
+                                <i class="fas fa-arrow-down"></i> Satış
+                            </button>
+                        </div>
+                    `;
+                    
+                    container.appendChild(card);
+                    console.log(`✅ ${coin.coin_kodu} kartı oluşturuldu - Fiyat: ₺${currentPrice.toLocaleString('tr-TR')}`);
+                    
+                } catch (error) {
+                    console.error(`❌ ${coin.coin_kodu} kartı oluşturulurken hata:`, error);
+                }
             });
+            
+            console.log(`✅ ${coins.length} desktop coin kartı başarıyla oluşturuldu`);
         }
 
         // Mobil coin kartları render et
         function renderMobileCoins(coins, container) {
+            console.log('📱 Mobil coinleri render ediliyor:', coins.length, 'coin');
             container.innerHTML = '';
             
+            if (!coins || coins.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #8896ab;">Coin bulunamadı</div>';
+                return;
+            }
+            
             coins.forEach((coin, index) => {
-                const priceChangeClass = coin.price_change_24h >= 0 ? 'positive' : 'negative';
-                const priceChangeIcon = coin.price_change_24h >= 0 ? '▲' : '▼';
-                const logoUrl = coin.logo_url || `https://via.placeholder.com/50/4fc3f7/ffffff?text=${coin.coin_kodu.charAt(0)}`;
-                
-                const card = document.createElement('div');
-                card.className = 'mobile-coin-card';
-                card.innerHTML = `
-                    <div class="mobile-coin-header">
-                        <div class="mobile-coin-info">
-                            <div class="mobile-coin-logo">
-                                <img src="${logoUrl}" alt="${coin.coin_adi}" 
-                                     style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;"
-                                     onerror="this.style.display='none'; this.parentNode.textContent='${coin.coin_kodu.charAt(0)}'">
-                            </div>
-                            <div class="mobile-coin-details">
-                                <h3>${coin.coin_adi}</h3>
-                                <span class="coin-symbol">${coin.coin_kodu}</span>
-                            </div>
-                        </div>
-                        <div class="mobile-coin-price">
-                            $${parseFloat(coin.current_price).toLocaleString('en-US', { 
-                                minimumFractionDigits: 2, 
-                                maximumFractionDigits: 6 
-                            })}
-                        </div>
-                    </div>
+                try {
+                    const priceChangeClass = parseFloat(coin.price_change_24h) >= 0 ? 'positive' : 'negative';
+                    const priceChangeIcon = parseFloat(coin.price_change_24h) >= 0 ? '▲' : '▼';
+                    const logoUrl = coin.logo_url || `https://via.placeholder.com/50/4fc3f7/ffffff?text=${coin.coin_kodu.charAt(0)}`;
                     
-                    <div class="mobile-coin-stats">
-                        <div class="mobile-coin-change ${priceChangeClass}">
-                            ${priceChangeIcon} ${parseFloat(coin.price_change_24h).toFixed(2)}%
-                        </div>
-                        <div class="mobile-coin-volume">
-                            Vol: $${coin.market_cap ? (parseInt(coin.market_cap) / 1000000).toFixed(1) + 'M' : 'N/A'}
-                        </div>
-                    </div>
+                    // Fiyat formatlaması - TL cinsinden
+                    const currentPrice = parseFloat(coin.current_price) || 0;
+                    const priceChange = parseFloat(coin.price_change_24h) || 0;
+                    const marketCap = parseFloat(coin.market_cap) || 0;
                     
-                    <div class="mobile-coin-actions">
-                        <button class="mobile-trade-btn buy" onclick="openTradingModal('${coin.id}', '${coin.coin_adi}', '${coin.current_price}', 'buy', '${coin.coin_kodu}')">
-                            <i class="fas fa-arrow-up"></i> Alış
-                        </button>
-                        <button class="mobile-trade-btn sell" onclick="openTradingModal('${coin.id}', '${coin.coin_adi}', '${coin.current_price}', 'sell', '${coin.coin_kodu}')">
-                            <i class="fas fa-arrow-down"></i> Satış
-                        </button>
-                    </div>
-                `;
-                
-                container.appendChild(card);
+                    const card = document.createElement('div');
+                    card.className = 'mobile-coin-card';
+                    card.onclick = () => openTradingModal(coin.id, coin.coin_adi, currentPrice, 'buy', coin.coin_kodu);
+                    
+                    card.innerHTML = `
+                        <div class="mobile-coin-header">
+                            <div class="mobile-coin-info">
+                                <div class="mobile-coin-logo">
+                                    <img src="${logoUrl}" alt="${coin.coin_adi}" 
+                                         style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;"
+                                         onerror="this.style.display='none'; this.parentNode.textContent='${coin.coin_kodu.charAt(0)}'">
+                                </div>
+                                <div class="mobile-coin-details">
+                                    <h3>${coin.coin_adi}</h3>
+                                    <span class="coin-symbol">${coin.coin_kodu}</span>
+                                </div>
+                            </div>
+                            <div class="mobile-coin-price">
+                                ₺${currentPrice.toLocaleString('tr-TR', { 
+                                    minimumFractionDigits: 2, 
+                                    maximumFractionDigits: 2 
+                                })}
+                            </div>
+                        </div>
+                        
+                        <div class="mobile-coin-stats">
+                            <div class="mobile-coin-change ${priceChangeClass}">
+                                ${priceChangeIcon} ${priceChange.toFixed(2)}%
+                            </div>
+                            <div class="mobile-coin-volume">
+                                Piyasa Değeri: ₺${marketCap > 0 ? (marketCap / 1000000000).toFixed(1) + 'B' : 'N/A'}
+                            </div>
+                        </div>
+                        
+                        <div class="mobile-coin-actions">
+                            <button class="mobile-trade-btn buy" onclick="event.stopPropagation(); openTradingModal('${coin.id}', '${coin.coin_adi}', '${currentPrice}', 'buy', '${coin.coin_kodu}')">
+                                <i class="fas fa-arrow-up"></i> Alış
+                            </button>
+                            <button class="mobile-trade-btn sell" onclick="event.stopPropagation(); openTradingModal('${coin.id}', '${coin.coin_adi}', '${currentPrice}', 'sell', '${coin.coin_kodu}')">
+                                <i class="fas fa-arrow-down"></i> Satış
+                            </button>
+                        </div>
+                    `;
+                    
+                    container.appendChild(card);
+                    console.log(`✅ ${coin.coin_kodu} mobil kartı oluşturuldu - Fiyat: ₺${currentPrice.toLocaleString('tr-TR')}`);
+                    
+                } catch (error) {
+                    console.error(`❌ ${coin.coin_kodu} mobil kartı oluşturulurken hata:`, error);
+                }
             });
-         }
+            
+            console.log(`✅ ${coins.length} mobil coin kartı başarıyla oluşturuldu`);
+        }
 
          // Global chart variables
          let chartAnimationFrame;
@@ -12976,13 +13065,33 @@
                     
                     showNotification(successMessage, 'success');
                     
-                    // Kullanıcı bilgilerini güncelle
-                    loadUserInfo();
+                    // DÜZELTME: Satış sonrası otomatik portföy yenileme
+                    console.log('🔄 Satış başarılı, portföy güncelleniyor...');
                     
-                    // Portföyü yeniden yükle
+                    // 1. Kullanıcı bilgilerini güncelle (bakiye)
+                    await loadUserInfo();
+                    
+                    // 2. Portföyü hemen yenile
+                    await loadPortfolio();
+                    
+                    // 3. Eğer portföy boş kaldıysa empty state göster
                     setTimeout(() => {
-                        loadPortfolio();
-                    }, 500);
+                        const portfolioCards = document.getElementById('portfolioCards');
+                        const portfolioTable = document.getElementById('portfolioTable');
+                        const portfolioEmpty = document.getElementById('portfolioEmpty');
+                        
+                        if (portfolioCards && portfolioCards.children.length === 0) {
+                            console.log('📭 Portföy boş, empty state gösteriliyor');
+                            if (portfolioEmpty) portfolioEmpty.style.display = 'block';
+                            if (portfolioCards) portfolioCards.style.display = 'none';
+                            if (portfolioTable) portfolioTable.style.display = 'none';
+                        }
+                    }, 1000);
+                    
+                    // 4. Başarı mesajı ile birlikte portföy durumunu bildir
+                    setTimeout(() => {
+                        showNotification(`🎉 ${coinCode} satışı tamamlandı ve portföy güncellendi!`, 'success');
+                    }, 1500);
                     
                 } else {
                     // Hata durumu - detaylı hata mesajı
@@ -13312,13 +13421,464 @@
             }
         }
         
-        // Quick portfolio stats update function (eksik fonksiyon eklendi)
-        function updateQuickPortfolioStats(summary) {
-            // Bu fonksiyon portfolio hızlı istatistiklerini günceller
-            console.log('📈 Updating quick portfolio stats:', summary);
+        // DÜZELTME: Portföy verilerini doğrula ve düzelt
+        function validateAndFixPortfolioData(portfolio) {
+            console.log('🔍 Portföy verileri doğrulanıyor:', portfolio.length, 'öğe');
             
-            // Gelecekte kullanılmak üzere placeholder
-            // Şimdilik sadece console log
+            const validatedPortfolio = [];
+            
+            portfolio.forEach((item, index) => {
+                try {
+                    // Temel alanları kontrol et
+                    if (!item.coin_id || !item.coin_kodu || !item.coin_adi) {
+                        console.warn(`⚠️ Eksik coin bilgisi (index ${index}):`, item);
+                        return;
+                    }
+                    
+                    // Sayısal değerleri düzelt
+                    const validatedItem = {
+                        ...item,
+                        net_miktar: parseFloat(item.net_miktar) || 0,
+                        current_price: parseFloat(item.current_price) || 0,
+                        avg_buy_price: parseFloat(item.avg_buy_price) || parseFloat(item.avg_buy_price_tl) || 0,
+                        current_value: parseFloat(item.current_value) || 0,
+                        invested_value: parseFloat(item.invested_value) || 0,
+                        profit_loss: parseFloat(item.profit_loss) || 0,
+                        profit_loss_percent: parseFloat(item.profit_loss_percent) || 0,
+                        price_change_24h: parseFloat(item.price_change_24h) || 0
+                    };
+                    
+                    // Sıfır miktar kontrolü
+                    if (validatedItem.net_miktar <= 0.00000001) {
+                        console.warn(`⚠️ Sıfır miktar (${item.coin_kodu}):`, validatedItem.net_miktar);
+                        return;
+                    }
+                    
+                    // Kar/zarar yeniden hesapla (güvenlik için)
+                    if (validatedItem.current_value > 0 && validatedItem.invested_value > 0) {
+                        validatedItem.profit_loss = validatedItem.current_value - validatedItem.invested_value;
+                        validatedItem.profit_loss_percent = (validatedItem.profit_loss / validatedItem.invested_value) * 100;
+                    }
+                    
+                    validatedPortfolio.push(validatedItem);
+                    console.log(`✅ ${item.coin_kodu} doğrulandı:`, {
+                        miktar: validatedItem.net_miktar,
+                        değer: validatedItem.current_value,
+                        kz: validatedItem.profit_loss
+                    });
+                    
+                } catch (error) {
+                    console.error(`❌ Portföy öğesi doğrulama hatası (index ${index}):`, error, item);
+                }
+            });
+            
+            console.log(`✅ ${validatedPortfolio.length}/${portfolio.length} portföy öğesi doğrulandı`);
+            return validatedPortfolio;
+        }
+        
+        // DÜZELTME: Geliştirilmiş portföy özet güncelleme
+        function updateEnhancedPortfolioSummary(summary, portfolio) {
+            console.log('📊 Geliştirilmiş portföy özeti güncelleniyor:', summary, portfolio.length);
+            
+            // Güvenli element güncellemeleri
+            const elements = {
+                totalValue: document.getElementById('portfolioTotalValue'),
+                profitLoss: document.getElementById('portfolioProfitLoss'),
+                profitPercent: document.getElementById('profitLossPercent'),
+                coinCount: document.getElementById('portfolioCoinCount'),
+                totalValueChange: document.getElementById('totalValueChange'),
+                totalValueTrend: document.getElementById('totalValueTrend'),
+                profitLossTrend: document.getElementById('profitLossTrend'),
+                bestPerformerValue: document.getElementById('bestPerformerValue'),
+                bestPerformerChange: document.getElementById('bestPerformerChange')
+            };
+            
+            // Özet verilerini hesapla (eğer backend'den gelmemişse)
+            let calculatedSummary = summary;
+            if (!summary || typeof summary.total_value === 'undefined') {
+                calculatedSummary = calculatePortfolioSummary(portfolio);
+                console.log('📊 Özet backend'den gelmedi, hesaplandı:', calculatedSummary);
+            }
+            
+            // Toplam değer
+            if (elements.totalValue) {
+                const totalValue = calculatedSummary.total_value || 0;
+                elements.totalValue.textContent = `₺${totalValue.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
+            }
+            
+            // Kar/Zarar
+            if (elements.profitLoss) {
+                const profitLoss = calculatedSummary.total_profit_loss || 0;
+                const isProfit = profitLoss >= 0;
+                const color = isProfit ? '#10b981' : '#ef4444';
+                
+                elements.profitLoss.textContent = `${isProfit ? '+' : ''}₺${Math.abs(profitLoss).toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
+                elements.profitLoss.style.color = color;
+                
+                // Yüzde
+                if (elements.profitPercent) {
+                    const profitPercent = calculatedSummary.total_profit_loss_percent || 0;
+                    elements.profitPercent.textContent = `${isProfit ? '+' : ''}${profitPercent.toFixed(2)}%`;
+                    elements.profitPercent.style.color = color;
+                }
+                
+                // Trend ikonları
+                const trendIcon = isProfit ? 'fa-arrow-up' : 'fa-arrow-down';
+                if (elements.totalValueTrend) {
+                    elements.totalValueTrend.className = `fas ${trendIcon}`;
+                    elements.totalValueTrend.style.color = color;
+                }
+                if (elements.profitLossTrend) {
+                    elements.profitLossTrend.className = `fas ${trendIcon}`;
+                    elements.profitLossTrend.style.color = color;
+                }
+            }
+            
+            // Coin sayısı
+            if (elements.coinCount) {
+                elements.coinCount.textContent = portfolio.length;
+            }
+            
+            // En iyi performans
+            if (portfolio.length > 0 && elements.bestPerformerValue && elements.bestPerformerChange) {
+                const bestPerformer = portfolio.reduce((best, current) => 
+                    (current.profit_loss_percent || 0) > (best.profit_loss_percent || 0) ? current : best
+                );
+                
+                elements.bestPerformerValue.textContent = bestPerformer.coin_kodu;
+                const bestPnLPercent = bestPerformer.profit_loss_percent || 0;
+                elements.bestPerformerChange.textContent = `${bestPnLPercent >= 0 ? '+' : ''}${bestPnLPercent.toFixed(2)}%`;
+                elements.bestPerformerChange.style.color = bestPnLPercent >= 0 ? '#10b981' : '#ef4444';
+            }
+            
+            console.log('✅ Portföy özeti güncellendi');
+        }
+        
+        // Portföy özetini hesapla
+        function calculatePortfolioSummary(portfolio) {
+            let totalValue = 0;
+            let totalInvested = 0;
+            
+            portfolio.forEach(item => {
+                totalValue += parseFloat(item.current_value) || 0;
+                totalInvested += parseFloat(item.invested_value) || 0;
+            });
+            
+            const totalProfitLoss = totalValue - totalInvested;
+            const totalProfitLossPercent = totalInvested > 0 ? (totalProfitLoss / totalInvested) * 100 : 0;
+            
+            return {
+                total_value: totalValue,
+                total_invested: totalInvested,
+                total_profit_loss: totalProfitLoss,
+                total_profit_loss_percent: totalProfitLossPercent,
+                coin_count: portfolio.length
+            };
+        }
+        
+        // DÜZELTME: Geliştirilmiş portföy kartları
+        function displayEnhancedPortfolioCards(portfolio, container) {
+            console.log('🎨 Geliştirilmiş portföy kartları oluşturuluyor:', portfolio.length);
+            
+            if (!container) {
+                console.error('❌ Portfolio cards container bulunamadı');
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            portfolio.forEach((item, index) => {
+                try {
+                    const profitLossColor = (item.profit_loss || 0) >= 0 ? '#10b981' : '#ef4444';
+                    const trendClass = (item.profit_loss || 0) >= 0 ? 'positive' : 'negative';
+                    const trendIcon = (item.profit_loss || 0) >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                    const logoUrl = item.logo_url || `https://via.placeholder.com/40/4fc3f7/ffffff?text=${item.coin_kodu.charAt(0)}`;
+                    
+                    const card = document.createElement('div');
+                    card.className = 'portfolio-asset-card enhanced';
+                    card.setAttribute('data-coin-id', item.coin_id);
+                    card.innerHTML = `
+                        <div class="asset-card-header">
+                            <div class="asset-info">
+                                <img src="${logoUrl}" alt="${item.coin_adi}" class="asset-logo"
+                                     onerror="this.src='https://via.placeholder.com/40/4fc3f7/ffffff?text=${item.coin_kodu.charAt(0)}'">
+                                <div class="asset-details">
+                                    <h4 onclick="navigateToMarkets('${item.coin_kodu}')" style="cursor: pointer; color: #4fc3f7;" title="Piyasalarda ${item.coin_kodu} görüntüle">${item.coin_adi}</h4>
+                                    <p>${item.coin_kodu}</p>
+                                </div>
+                            </div>
+                            <div class="asset-trend ${trendClass}">
+                                <i class="fas ${trendIcon}"></i>
+                                ${(item.profit_loss_percent || 0) >= 0 ? '+' : ''}${parseFloat(item.profit_loss_percent || 0).toFixed(2)}%
+                            </div>
+                        </div>
+                        
+                        <div class="asset-metrics">
+                            <div class="metric">
+                                <div class="metric-label">Miktar</div>
+                                <div class="metric-value">${parseFloat(item.net_miktar || 0).toFixed(6)}</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Güncel Değer</div>
+                                <div class="metric-value">₺${parseFloat(item.current_value || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Ort. Alış</div>
+                                <div class="metric-value">₺${parseFloat(item.avg_buy_price || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">K/Z</div>
+                                <div class="metric-value" style="color: ${profitLossColor};">
+                                    ${(item.profit_loss || 0) >= 0 ? '+' : ''}₺${Math.abs(parseFloat(item.profit_loss || 0)).toLocaleString('tr-TR', {minimumFractionDigits: 2})}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="asset-actions">
+                            <button class="asset-action-btn sell" onclick="portfolioSellAsset('${item.coin_id}', '${item.coin_adi}', '${item.coin_kodu}', ${item.net_miktar})"
+                                    title="${item.coin_kodu} sat (Mevcut: ${parseFloat(item.net_miktar || 0).toFixed(6)})">
+                                <i class="fas fa-minus"></i> Sat
+                            </button>
+                        </div>
+                    `;
+                    
+                    container.appendChild(card);
+                    console.log(`✅ ${item.coin_kodu} kartı oluşturuldu (${index + 1}/${portfolio.length})`);
+                    
+                } catch (error) {
+                    console.error(`❌ ${item.coin_kodu} kartı oluşturulurken hata:`, error);
+                }
+            });
+            
+            console.log(`✅ ${portfolio.length} geliştirilmiş portföy kartı oluşturuldu`);
+        }
+        
+        // DÜZELTME: Geliştirilmiş portföy tablosu
+        function displayEnhancedPortfolioTable(portfolio, tbody) {
+            console.log('📋 Geliştirilmiş portföy tablosu oluşturuluyor:', portfolio.length);
+            
+            if (!tbody) {
+                console.error('❌ Portfolio table body bulunamadı');
+                return;
+            }
+            
+            tbody.innerHTML = '';
+            
+            portfolio.forEach((item, index) => {
+                try {
+                    const profitLossColor = (item.profit_loss || 0) >= 0 ? '#10b981' : '#ef4444';
+                    const logoUrl = item.logo_url || `https://via.placeholder.com/32/4fc3f7/ffffff?text=${item.coin_kodu.charAt(0)}`;
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <img src="${logoUrl}" alt="${item.coin_adi}" 
+                                     style="width: 32px; height: 32px; border-radius: 50%;"
+                                     onerror="this.src='https://via.placeholder.com/32/4fc3f7/ffffff?text=${item.coin_kodu.charAt(0)}'">
+                                <div>
+                                    <div style="font-weight: 600; color: #ffffff;">${item.coin_adi}</div>
+                                    <div style="font-size: 12px; color: #8b8fa3;">${item.coin_kodu}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="font-family: monospace;">${parseFloat(item.net_miktar || 0).toFixed(6)}</td>
+                        <td>₺${parseFloat(item.avg_buy_price || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                        <td>₺${parseFloat(item.current_price || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                        <td style="font-weight: 600;">₺${parseFloat(item.current_value || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                        <td style="color: ${profitLossColor}; font-weight: 600;">
+                            ${(item.profit_loss || 0) >= 0 ? '+' : ''}₺${Math.abs(parseFloat(item.profit_loss || 0)).toLocaleString('tr-TR', {minimumFractionDigits: 2})}
+                        </td>
+                        <td style="color: ${profitLossColor}; font-weight: 600;">
+                            ${(item.profit_loss_percent || 0) >= 0 ? '+' : ''}${parseFloat(item.profit_loss_percent || 0).toFixed(2)}%
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 8px; justify-content: center;">
+                                <button onclick="portfolioSellAsset('${item.coin_id}', '${item.coin_adi}', '${item.coin_kodu}', ${item.net_miktar})" 
+                                        style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px;">
+                                    <i class="fas fa-minus"></i> Sat
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    
+                    tbody.appendChild(row);
+                    console.log(`✅ ${item.coin_kodu} tablo satırı oluşturuldu (${index + 1}/${portfolio.length})`);
+                    
+                } catch (error) {
+                    console.error(`❌ ${item.coin_kodu} tablo satırı oluşturulurken hata:`, error);
+                }
+            });
+            
+            console.log(`✅ ${portfolio.length} geliştirilmiş portföy tablo satırı oluşturuldu`);
+        }
+        
+        // Portföy özetini sıfırla
+        function updatePortfolioSummaryToZero() {
+            const elements = [
+                'portfolioTotalValue',
+                'portfolioProfitLoss', 
+                'profitLossPercent',
+                'portfolioCoinCount',
+                'bestPerformerValue',
+                'bestPerformerChange'
+            ];
+            
+            elements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    if (id === 'portfolioCoinCount') {
+                        element.textContent = '0';
+                    } else if (id === 'bestPerformerValue') {
+                        element.textContent = '-';
+                    } else if (id === 'bestPerformerChange') {
+                        element.textContent = '-';
+                    } else {
+                        element.textContent = '₺0';
+                    }
+                }
+            });
+        }
+        
+        // Portföy sağlık kontrolü
+        function performPortfolioHealthCheck(portfolio, summary) {
+            console.log('🏥 Portföy sağlık kontrolü başlatılıyor...');
+            
+            const issues = [];
+            
+            // Negatif değer kontrolü
+            portfolio.forEach(item => {
+                if (item.current_value < 0) {
+                    issues.push(`${item.coin_kodu}: Negatif güncel değer (${item.current_value})`);
+                }
+                if (item.invested_value < 0) {
+                    issues.push(`${item.coin_kodu}: Negatif yatırım değeri (${item.invested_value})`);
+                }
+                if (item.net_miktar <= 0) {
+                    issues.push(`${item.coin_kodu}: Sıfır veya negatif miktar (${item.net_miktar})`);
+                }
+            });
+            
+            // Özet tutarsızlığı kontrolü
+            if (summary) {
+                const calculatedSummary = calculatePortfolioSummary(portfolio);
+                const valueDiff = Math.abs(summary.total_value - calculatedSummary.total_value);
+                
+                if (valueDiff > 1) { // 1 TL'den fazla fark
+                    issues.push(`Özet tutarsızlığı: Backend(${summary.total_value}) vs Hesaplanan(${calculatedSummary.total_value})`);
+                }
+            }
+            
+            if (issues.length > 0) {
+                console.warn('⚠️ Portföy sağlık sorunları tespit edildi:', issues);
+                // Geliştirme modunda kullanıcıya bildir
+                if (window.location.hostname === 'localhost') {
+                    showNotification(`⚠️ Portföy sağlık uyarısı: ${issues.length} sorun tespit edildi`, 'warning');
+                }
+            } else {
+                console.log('✅ Portföy sağlık kontrolü başarılı');
+            }
+            
+            return issues;
+        }
+        
+        // Quick portfolio stats update function (düzeltildi)
+        function updateQuickPortfolioStats(summary) {
+            console.log('📈 Hızlı portföy istatistikleri güncelleniyor:', summary);
+
+            // Hızlı istatistik güncellemeleri için gelecekte kullanılacak
+        }
+
+        // DÜZELTME: Portföy satış fonksiyonu - Basitleştirilmiş ve düzeltilmiş
+        async function portfolioSellAsset(coinId, coinName, coinCode, availableAmount) {
+            console.log(`🔄 ${coinCode} satış işlemi başlatılıyor...`, {coinId, availableAmount});
+            
+            // Parametre kontrolü
+            if (!coinId || !coinCode || !availableAmount || parseFloat(availableAmount) <= 0) {
+                showNotification('❌ Geçersiz satış parametreleri', 'error');
+                return;
+            }
+
+            const sellAmount = parseFloat(availableAmount);
+            
+            // Onay dialogu
+            const confirmMessage = `${coinName} (${coinCode}) satış işlemi:\n\n` +
+                                 `• Satılacak Miktar: ${sellAmount.toFixed(8)} ${coinCode}\n` +
+                                 `• İşlem: Tüm bakiye piyasa fiyatından satılacak\n\n` +
+                                 `Bu işlemi onaylıyor musunuz?`;
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+
+            // Loading state
+            const sellButton = event?.target;
+            let originalText = '';
+            if (sellButton) {
+                originalText = sellButton.innerHTML;
+                sellButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Satılıyor...';
+                sellButton.disabled = true;
+            }
+
+            try {
+                // FormData ile API çağrısı
+                const formData = new FormData();
+                formData.append('coin_id', coinId);
+                formData.append('miktar', sellAmount.toFixed(8));
+                formData.append('fiyat', 0); // 0 = güncel piyasa fiyatını kullan
+
+                console.log('📤 Satış isteği gönderiliyor:', {
+                    coin_id: coinId,
+                    miktar: sellAmount.toFixed(8),
+                    coin_code: coinCode
+                });
+
+                const response = await fetch('backend/user/trading.php?action=sell', {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                console.log('📥 Satış API yanıtı:', result);
+                
+                if (result.success) {
+                    const soldAmount = result.data?.miktar || sellAmount;
+                    const totalAmount = result.data?.toplam_tutar || 0;
+                    const commission = result.data?.komisyon || 0;
+                    
+                    let successMessage = `✅ ${parseFloat(soldAmount).toFixed(6)} ${coinCode} başarıyla satıldı!`;
+                    if (totalAmount > 0) {
+                        successMessage += `\n💰 Alınan Tutar: ₺${parseFloat(totalAmount).toLocaleString('tr-TR')}`;
+                    }
+                    if (commission > 0) {
+                        successMessage += `\n📊 Komisyon: ₺${parseFloat(commission).toLocaleString('tr-TR')}`;
+                    }
+                    
+                    showNotification(successMessage, 'success');
+                    
+                    // Kullanıcı bilgilerini ve portföyü güncelle
+                    await loadUserInfo();
+                    await loadPortfolio();
+                    
+                } else {
+                    throw new Error(result.message || 'Satış işlemi başarısız');
+                }
+                
+            } catch (error) {
+                console.error('❌ Satış hatası:', error);
+                showNotification(`❌ Satış hatası: ${error.message}`, 'error');
+            } finally {
+                // Loading state'i kaldır
+                if (sellButton && originalText) {
+                    sellButton.innerHTML = originalText;
+                    sellButton.disabled = false;
+                }
+            }
         }
     </script>
 </body>
