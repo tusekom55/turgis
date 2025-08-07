@@ -76,16 +76,38 @@ try {
     $coin_id = $_GET['coin_id'] ?? null;
     
     if ($coin_id) {
-        // Tekli coin bilgisi getir
-        $sql = 'SELECT coins.id, coins.coin_adi, coins.coin_kodu, coins.current_price, coins.price_change_24h, coins.logo_url, COALESCE(coin_kategorileri.kategori_adi, "Diğer") as kategori_adi FROM coins LEFT JOIN coin_kategorileri ON coins.kategori_id = coin_kategorileri.id WHERE coins.id = ? AND coins.is_active = 1';
+        // Tekli coin bilgisi getir - yeni yapıya uygun
+        $sql = 'SELECT 
+                    coins.id, 
+                    coins.coin_adi, 
+                    coins.coin_kodu, 
+                    coins.current_price, 
+                    coins.price_change_24h, 
+                    coins.coin_type,
+                    coins.price_source,
+                    "Kripto Para" as kategori_adi
+                FROM coins 
+                WHERE coins.id = ? AND coins.is_active = 1';
         $stmt = $conn->prepare($sql);
         $stmt->execute([$coin_id]);
         $coin = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($coin) {
-            // Artık fiyatlar TL cinsinden saklanıyor
             $coin['current_price'] = floatval($coin['current_price']);
+            $coin['price_change_24h'] = floatval($coin['price_change_24h']);
             $coin['currency'] = 'TRY';
+            
+            // Logo URL'si yoksa varsayılan ekle
+            if (empty($coin['logo_url'])) {
+                $coin['logo_url'] = 'https://via.placeholder.com/32x32/007bff/ffffff?text=' . substr($coin['coin_kodu'], 0, 2);
+            }
+            
+            // Kategori adını coin tipine göre ayarla
+            if ($coin['coin_type'] === 'manual') {
+                $coin['kategori_adi'] = 'Özel Coinler';
+            } else {
+                $coin['kategori_adi'] = 'Kripto Para';
+            }
             
             echo json_encode(['success' => true, 'coin' => $coin]);
         } else {
@@ -111,15 +133,46 @@ try {
         exit;
     }
     
-    $sql = 'SELECT coins.id, coins.coin_adi, coins.coin_kodu, coins.current_price, coins.price_change_24h, coins.logo_url, COALESCE(coin_kategorileri.kategori_adi, "Diğer") as kategori_adi FROM coins LEFT JOIN coin_kategorileri ON coins.kategori_id = coin_kategorileri.id WHERE coins.is_active = 1 ORDER BY coins.sira ASC, coins.id ASC';
+    // Yeni veritabanı yapısına uygun sorgu
+    $sql = 'SELECT 
+                coins.id, 
+                coins.coin_adi, 
+                coins.coin_kodu, 
+                coins.current_price, 
+                coins.price_change_24h, 
+                coins.coin_type,
+                coins.price_source,
+                "Kripto Para" as kategori_adi
+            FROM coins 
+            WHERE coins.is_active = 1 
+            ORDER BY 
+                CASE 
+                    WHEN coins.coin_type = "manual" THEN 1 
+                    ELSE 2 
+                END, 
+                coins.coin_kodu ASC';
+    
     $stmt = $conn->prepare($sql);
     $stmt->execute();
     $coins = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Artık fiyatlar TL cinsinden saklanıyor
+    // Fiyatları düzenle ve ek bilgiler ekle
     foreach ($coins as &$coin) {
         $coin['current_price'] = floatval($coin['current_price']);
+        $coin['price_change_24h'] = floatval($coin['price_change_24h']);
         $coin['currency'] = 'TRY';
+        
+        // Logo URL'si yoksa varsayılan ekle
+        if (empty($coin['logo_url'])) {
+            $coin['logo_url'] = 'https://via.placeholder.com/32x32/007bff/ffffff?text=' . substr($coin['coin_kodu'], 0, 2);
+        }
+        
+        // Kategori adını coin tipine göre ayarla
+        if ($coin['coin_type'] === 'manual') {
+            $coin['kategori_adi'] = 'Özel Coinler';
+        } else {
+            $coin['kategori_adi'] = 'Kripto Para';
+        }
     }
     
     echo json_encode(['success' => true, 'coins' => $coins]);
