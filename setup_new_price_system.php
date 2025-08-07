@@ -31,8 +31,15 @@ try {
             $success_count++;
             echo "<p style='color:green;'>✅ SQL başarılı: " . substr($statement, 0, 50) . "...</p>";
         } catch (Exception $e) {
-            $error_count++;
-            echo "<p style='color:red;'>❌ SQL hatası: " . $e->getMessage() . "</p>";
+            // Sütun zaten varsa hatayı yok say
+            if (strpos($e->getMessage(), 'Duplicate column name') !== false || 
+                strpos($e->getMessage(), 'already exists') !== false) {
+                echo "<p style='color:blue;'>ℹ️ Zaten mevcut: " . substr($statement, 0, 50) . "...</p>";
+                $success_count++;
+            } else {
+                $error_count++;
+                echo "<p style='color:red;'>❌ SQL hatası: " . $e->getMessage() . "</p>";
+            }
         }
     }
     
@@ -60,14 +67,26 @@ try {
     
     echo "<h2>4. Sistem Durumu Kontrolü</h2>";
     
-    // Coin sayıları
-    $stmt = $conn->prepare("SELECT 
-        COUNT(*) as total_coins,
-        SUM(CASE WHEN is_api_coin = 1 THEN 1 ELSE 0 END) as api_coins,
-        SUM(CASE WHEN is_api_coin = 0 THEN 1 ELSE 0 END) as manual_coins
-        FROM coins WHERE is_active = 1");
-    $stmt->execute();
-    $stats = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Sütunların varlığını kontrol et
+    $columns_check = $conn->prepare("SHOW COLUMNS FROM coins LIKE 'is_api_coin'");
+    $columns_check->execute();
+    
+    if ($columns_check->rowCount() > 0) {
+        // Coin sayıları
+        $stmt = $conn->prepare("SELECT 
+            COUNT(*) as total_coins,
+            SUM(CASE WHEN is_api_coin = 1 THEN 1 ELSE 0 END) as api_coins,
+            SUM(CASE WHEN is_api_coin = 0 THEN 1 ELSE 0 END) as manual_coins
+            FROM coins WHERE is_active = 1");
+        $stmt->execute();
+        $stats = $stmt->fetch(PDO::FETCH_ASSOC);
+    } else {
+        // Sütunlar henüz eklenmemişse basit sayım
+        $stmt = $conn->prepare("SELECT COUNT(*) as total_coins FROM coins WHERE is_active = 1");
+        $stmt->execute();
+        $total = $stmt->fetchColumn();
+        $stats = ['total_coins' => $total, 'api_coins' => 'Bilinmiyor', 'manual_coins' => 'Bilinmiyor'];
+    }
     
     echo "<table border='1' style='border-collapse:collapse; margin:20px 0;'>";
     echo "<tr><th style='padding:10px; background:#f0f0f0;'>Özellik</th><th style='padding:10px; background:#f0f0f0;'>Değer</th></tr>";

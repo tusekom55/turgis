@@ -1,11 +1,10 @@
 -- Veritabanı şeması güncellemeleri
 -- Fiyat yönetim sistemi için gerekli sütunlar
 
--- Coins tablosuna yeni sütunlar ekle
-ALTER TABLE coins 
-ADD COLUMN IF NOT EXISTS price_source VARCHAR(20) DEFAULT 'manual' COMMENT 'api, manual, admin',
-ADD COLUMN IF NOT EXISTS last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-ADD COLUMN IF NOT EXISTS is_api_coin BOOLEAN DEFAULT FALSE COMMENT 'API den çekilen coin mi';
+-- Coins tablosuna yeni sütunlar ekle (tek tek)
+ALTER TABLE coins ADD COLUMN price_source VARCHAR(20) DEFAULT 'manual';
+ALTER TABLE coins ADD COLUMN last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+ALTER TABLE coins ADD COLUMN is_api_coin BOOLEAN DEFAULT FALSE;
 
 -- Fiyat güncelleme logları için tablo
 CREATE TABLE IF NOT EXISTS price_update_logs (
