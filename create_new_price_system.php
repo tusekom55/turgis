@@ -220,12 +220,24 @@
                     echo "🔄 Yeni tablolar oluşturuluyor...\n";
                     
                     try {
-                        // Eski tabloları sil
-                        $drop_tables = ['coins', 'price_history'];
-                        foreach ($drop_tables as $table) {
-                            $conn->exec("DROP TABLE IF EXISTS {$table}");
-                            echo "🗑️ Eski {$table} tablosu silindi\n";
+                        // Foreign key kontrollerini geçici olarak kapat
+                        $conn->exec("SET FOREIGN_KEY_CHECKS = 0");
+                        echo "🔧 Foreign key kontrolleri kapatıldı\n";
+                        
+                        // Bağımlı tabloları önce sil
+                        $drop_order = ['price_history', 'portfolios', 'trading_islemleri', 'coins'];
+                        foreach ($drop_order as $table) {
+                            try {
+                                $conn->exec("DROP TABLE IF EXISTS {$table}");
+                                echo "🗑️ {$table} tablosu silindi\n";
+                            } catch (Exception $e) {
+                                echo "⚠️ {$table} silinirken hata (devam ediliyor): " . $e->getMessage() . "\n";
+                            }
                         }
+                        
+                        // Foreign key kontrollerini tekrar aç
+                        $conn->exec("SET FOREIGN_KEY_CHECKS = 1");
+                        echo "🔧 Foreign key kontrolleri açıldı\n";
                         
                         // Yeni coins tablosu
                         $coins_sql = "
