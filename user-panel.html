@@ -9008,18 +9008,30 @@
         function toggleMobileMenu() {
             const sidebar = document.querySelector('.sidebar');
             const overlay = document.querySelector('.mobile-overlay');
+            const body = document.body;
             
             sidebar.classList.toggle('mobile-open');
             overlay.classList.toggle('active');
+            
+            // Arka plan scroll'unu engelle/aktif et
+            if (sidebar.classList.contains('mobile-open')) {
+                body.style.overflow = 'hidden';
+            } else {
+                body.style.overflow = '';
+            }
         }
 
         // Close mobile menu
         function closeMobileMenu() {
             const sidebar = document.querySelector('.sidebar');
             const overlay = document.querySelector('.mobile-overlay');
+            const body = document.body;
             
             sidebar.classList.remove('mobile-open');
             overlay.classList.remove('active');
+            
+            // Arka plan scroll'unu tekrar aktif et
+            body.style.overflow = '';
         }
 
         // Close mobile menu when clicking navigation items
