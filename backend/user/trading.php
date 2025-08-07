@@ -167,25 +167,19 @@ try {
             break;
             
         case 'sell':
-            // DÜZELTME: Coin satma işlemi - Portföy entegrasyonu
+            // DÜZELTME: Coin satma işlemi - Basitleştirilmiş
             $coin_id = intval($_POST['coin_id'] ?? 0);
             $miktar = floatval($_POST['miktar'] ?? 0);
             $fiyat = floatval($_POST['fiyat'] ?? 0);
             
             // Debug log
-            error_log("SELL REQUEST FIXED - coin_id: {$coin_id}, miktar: {$miktar}, fiyat: {$fiyat}, user_id: {$user_id}");
+            error_log("SELL REQUEST - coin_id: {$coin_id}, miktar: {$miktar}, fiyat: {$fiyat}, user_id: {$user_id}");
             
             if ($coin_id <= 0 || $miktar <= 0) {
+                ob_clean();
                 echo json_encode([
                     'success' => false, 
-                    'message' => 'Geçersiz işlem parametreleri. Coin ID ve miktar pozitif olmalıdır.',
-                    'debug' => [
-                        'coin_id' => $coin_id,
-                        'miktar' => $miktar,
-                        'fiyat' => $fiyat,
-                        'user_id' => $user_id,
-                        'validation_error' => 'coin_id <= 0 or miktar <= 0'
-                    ]
+                    'message' => 'Geçersiz parametreler'
                 ]);
                 exit;
             }
