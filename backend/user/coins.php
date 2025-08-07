@@ -46,7 +46,31 @@ if (!$config_loaded) {
 try {
     $conn = db_connect();
     
-    // Artık fiyatlar TL cinsinden saklanıyor
+    // Fiyat güncelleme sistemi entegrasyonu
+    require_once __DIR__ . '/../utils/price_manager.php';
+    $priceManager = new PriceManager();
+    
+    // Otomatik fiyat güncelleme (her 5 dakikada bir)
+    $last_update_file = __DIR__ . '/../cache/last_price_update.txt';
+    $should_update = false;
+    
+    if (!file_exists($last_update_file)) {
+        $should_update = true;
+    } else {
+        $last_update = intval(file_get_contents($last_update_file));
+        $current_time = time();
+        if (($current_time - $last_update) > 300) { // 5 dakika = 300 saniye
+            $should_update = true;
+        }
+    }
+    
+    if ($should_update) {
+        $priceManager->updateAllPrices();
+        if (!is_dir(__DIR__ . '/../cache')) {
+            mkdir(__DIR__ . '/../cache', 0755, true);
+        }
+        file_put_contents($last_update_file, time());
+    }
     
     // Tekli coin bilgisi isteniyor mu?
     $coin_id = $_GET['coin_id'] ?? null;
