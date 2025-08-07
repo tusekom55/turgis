@@ -131,7 +131,10 @@ try {
         exit;
     }
     
-    // Yeni veritabanı yapısına uygun sorgu
+    // Arama parametresini kontrol et
+    $search = $_GET['search'] ?? '';
+    
+    // Yeni veritabanı yapısına uygun sorgu - arama desteği ile
     $sql = 'SELECT 
                 coins.id, 
                 coins.coin_adi, 
@@ -142,8 +145,19 @@ try {
                 coins.price_source,
                 "Kripto Para" as kategori_adi
             FROM coins 
-            WHERE coins.is_active = 1 
-            ORDER BY 
+            WHERE coins.is_active = 1';
+    
+    $params = [];
+    
+    // Arama varsa WHERE koşuluna ekle
+    if (!empty($search)) {
+        $sql .= ' AND (coins.coin_adi LIKE ? OR coins.coin_kodu LIKE ?)';
+        $search_param = '%' . $search . '%';
+        $params[] = $search_param;
+        $params[] = $search_param;
+    }
+    
+    $sql .= ' ORDER BY 
                 CASE 
                     WHEN coins.coin_type = "manual" THEN 1 
                     ELSE 2 
@@ -151,7 +165,7 @@ try {
                 coins.coin_kodu ASC';
     
     $stmt = $conn->prepare($sql);
-    $stmt->execute();
+    $stmt->execute($params);
     $coins = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Fiyatları düzenle ve ek bilgiler ekle
