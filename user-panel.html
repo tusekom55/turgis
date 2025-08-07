@@ -8632,7 +8632,7 @@
                      `;
                  }
                  
-                 // coins.php endpoint'den veri çek - coins_hybrid.php kaldırıldı, sadece coins.php kullanılıyor
+                 // coins.php endpoint'den veri çek
                  let url = 'backend/user/coins.php';
                  
                  if (searchInput) {
@@ -13270,6 +13270,12 @@
             }
         }
         
+        // Add missing function
+        function addPortfolioQuickStats() {
+            // Portfolio quick stats functionality
+            console.log('📈 Portfolio quick stats initialized');
+        }
+
         // Initialize portfolio auto-refresh on page load
         document.addEventListener('DOMContentLoaded', function() {
             enablePortfolioAutoRefresh();

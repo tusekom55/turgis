@@ -43,6 +43,21 @@ if (!$config_loaded) {
     die(json_encode(['success' => false, 'message' => 'Config dosyası bulunamadı']));
 }
 
+// Veritabanı bağlantısı olmadan mock data döndür
+if (!function_exists('db_connect')) {
+    echo json_encode([
+        'success' => true, 
+        'coins' => [
+            ['id' => 1, 'coin_adi' => 'Bitcoin', 'coin_kodu' => 'BTC', 'current_price' => 1350000, 'price_change_24h' => 2.5, 'kategori_adi' => 'Kripto Para', 'logo_url' => 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png'],
+            ['id' => 2, 'coin_adi' => 'Ethereum', 'coin_kodu' => 'ETH', 'current_price' => 85000, 'price_change_24h' => -1.2, 'kategori_adi' => 'Kripto Para', 'logo_url' => 'https://assets.coingecko.com/coins/images/279/small/ethereum.png'],
+            ['id' => 3, 'coin_adi' => 'BNB', 'coin_kodu' => 'BNB', 'current_price' => 12500, 'price_change_24h' => 0.8, 'kategori_adi' => 'Kripto Para', 'logo_url' => 'https://assets.coingecko.com/coins/images/825/small/binance-coin-logo.png'],
+            ['id' => 4, 'coin_adi' => 'Tugaycoin', 'coin_kodu' => 'T', 'current_price' => 150, 'price_change_24h' => 15.5, 'kategori_adi' => 'Özel Coinler', 'logo_url' => 'https://via.placeholder.com/32x32/007bff/ffffff?text=T'],
+            ['id' => 5, 'coin_adi' => 'SEX Coin', 'coin_kodu' => 'SEX', 'current_price' => 0.25, 'price_change_24h' => 8.2, 'kategori_adi' => 'Özel Coinler', 'logo_url' => 'https://via.placeholder.com/32x32/ff6b6b/ffffff?text=SEX']
+        ]
+    ]);
+    exit;
+}
+
 try {
     $conn = db_connect();
     

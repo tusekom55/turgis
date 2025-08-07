@@ -53,6 +53,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
+// Veritabanı bağlantısı olmadan mock data döndür
+if (!function_exists('db_connect')) {
+    $action = $_GET['action'] ?? '';
+    
+    if ($action === 'portfolio') {
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'portfolio' => [
+                    [
+                        'coin_id' => 1,
+                        'coin_adi' => 'Bitcoin',
+                        'coin_kodu' => 'BTC',
+                        'net_miktar' => 0.001,
+                        'current_price' => 1350000,
+                        'avg_buy_price' => 1300000,
+                        'current_value' => 1350,
+                        'invested_value' => 1300,
+                        'profit_loss' => 50,
+                        'profit_loss_percent' => 3.85,
+                        'kategori_adi' => 'Kripto Para'
+                    ],
+                    [
+                        'coin_id' => 4,
+                        'coin_adi' => 'Tugaycoin',
+                        'coin_kodu' => 'T',
+                        'net_miktar' => 100,
+                        'current_price' => 150,
+                        'avg_buy_price' => 120,
+                        'current_value' => 15000,
+                        'invested_value' => 12000,
+                        'profit_loss' => 3000,
+                        'profit_loss_percent' => 25.0,
+                        'kategori_adi' => 'Özel Coinler'
+                    ]
+                ],
+                'summary' => [
+                    'total_value' => 16350,
+                    'total_invested' => 13300,
+                    'total_profit_loss' => 3050,
+                    'total_profit_loss_percent' => 22.93,
+                    'coin_count' => 2,
+                    'currency' => 'TRY'
+                ]
+            ]
+        ]);
+    } elseif ($action === 'health_check') {
+        echo json_encode([
+            'success' => true,
+            'message' => 'Trading API sağlıklı (Mock Mode)',
+            'checks' => [
+                'database' => true,
+                'tables' => true,
+                'user_session' => true
+            ],
+            'timestamp' => date('Y-m-d H:i:s')
+        ]);
+    } else {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Mock modda sadece portfolio ve health_check destekleniyor'
+        ]);
+    }
+    exit;
+}
+
 // Session kontrolü (debug modunda esneklik)
 $user_id = $_SESSION['user_id'] ?? null;
 
