@@ -10038,10 +10038,13 @@
             }
         }
 
-        // Modal coin icon'unu dinamik olarak güncelle - SADECE LOGO (DÜZELTME: Icon tamamen kaldırıldı)
+        // Modal coin icon'unu dinamik olarak güncelle - DÜZELTME: String parsing ve hizalama sorunları
         function updateModalCoinIcon(coinSymbol) {
             const modalCoinIconContainer = document.querySelector('.coin-icon-container');
             if (!modalCoinIconContainer) return;
+            
+            // Güvenli string işleme için coinSymbol'ü temizle
+            const safeCoinSymbol = String(coinSymbol).trim().toUpperCase();
             
             // Gerçek coin logoları (piyasalardaki gibi)
             const coinLogos = {
@@ -10086,22 +10089,72 @@
             };
             
             // Logo URL'ini belirle
-            const logoUrl = coinLogos[coinSymbol];
+            const logoUrl = coinLogos[safeCoinSymbol];
+            const firstLetter = safeCoinSymbol.charAt(0) || 'C';
+            
+            // Container'ı temizle
+            modalCoinIconContainer.innerHTML = '';
             
             if (logoUrl) {
-                // SADECE LOGO - icon tamamen kaldırıldı
-                modalCoinIconContainer.innerHTML = `
-                    <img src="${logoUrl}" 
-                         alt="${coinSymbol}" 
-                         style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: none;"
-                         onerror="this.style.display='none'; this.parentNode.style.background='linear-gradient(135deg, #ff7c4c 0%, #ff9a3c 100%)'; this.parentNode.innerHTML='<span style=\\"font-size: 24px; color: white; font-weight: bold;\\">${coinSymbol.charAt(0)}</span>';">
+                // Logo ile container oluştur - DÜZELTME: Hizalama ve fallback
+                const logoImg = document.createElement('img');
+                logoImg.src = logoUrl;
+                logoImg.alt = safeCoinSymbol;
+                logoImg.style.cssText = `
+                    width: 100%;
+                    height: 100%;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    object-position: center;
+                    display: block;
+                    margin: 0;
+                    padding: 0;
                 `;
+                
+                // Hata durumunda fallback
+                logoImg.onerror = function() {
+                    console.warn(`Logo yüklenemedi: ${logoUrl}`);
+                    modalCoinIconContainer.innerHTML = `
+                        <div style="
+                            width: 100%;
+                            height: 100%;
+                            border-radius: 50%;
+                            background: linear-gradient(135deg, #ff7c4c 0%, #ff9a3c 100%);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 24px;
+                            color: white;
+                            font-weight: bold;
+                            margin: 0;
+                            padding: 0;
+                        ">${firstLetter}</div>
+                    `;
+                };
+                
+                modalCoinIconContainer.appendChild(logoImg);
+                
             } else {
-                // Logo yoksa sadece harf göster - icon yok
-                modalCoinIconContainer.innerHTML = `<span style="font-size: 24px; color: white; font-weight: bold;">${coinSymbol.charAt(0)}</span>`;
+                // Logo yoksa sadece harf göster - DÜZELTME: Merkezi hizalama
+                modalCoinIconContainer.innerHTML = `
+                    <div style="
+                        width: 100%;
+                        height: 100%;
+                        border-radius: 50%;
+                        background: linear-gradient(135deg, #ff7c4c 0%, #ff9a3c 100%);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 24px;
+                        color: white;
+                        font-weight: bold;
+                        margin: 0;
+                        padding: 0;
+                    ">${firstLetter}</div>
+                `;
             }
             
-            console.log(`🎨 Modal SADECE logo güncellendi (icon kaldırıldı): ${coinSymbol} -> ${logoUrl || 'Letter only'}`);
+            console.log(`🎨 Modal logo güncellendi: ${safeCoinSymbol} -> ${logoUrl || 'Letter: ' + firstLetter}`);
         }
 
         // Enhanced Trading modalını kapat
@@ -13507,6 +13560,16 @@
             
             // Gelecekte kullanılmak üzere placeholder
             // Şimdilik sadece console log
+        }
+        
+        // Add portfolio quick stats function (eksik fonksiyon eklendi)
+        function addPortfolioQuickStats() {
+            console.log('📊 Adding portfolio quick stats functionality');
+            
+            // Portfolio hızlı istatistik özelliklerini ekler
+            // Bu fonksiyon portfolio sayfasında hızlı erişim widget'ları oluşturur
+            
+            // Şimdilik placeholder - gelecekte genişletilebilir
         }
     </script>
 </body>
