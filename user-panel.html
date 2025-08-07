@@ -8818,7 +8818,30 @@
         // Para yatırma sayfasına yönlendir
         function navigateToDeposit() {
             closeBalanceMenu();
-            showSection('deposit');
+            
+            // Sol menüdeki "Para Yatır" linkini aktif et
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.dataset.section === 'deposit') {
+                    link.classList.add('active');
+                }
+            });
+            
+            // Deposit bölümünü göster
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById('deposit').classList.add('active');
+            
+            // Sayfa başlığını güncelle
+            document.getElementById('pageTitle').textContent = 'Para Yatır';
+            
+            // Para yatırma taleplerini yükle
+            if (typeof loadRecentDeposits === 'function') {
+                loadRecentDeposits();
+            }
         }
         
         // Para çekme yakında gelecek uyarısı
