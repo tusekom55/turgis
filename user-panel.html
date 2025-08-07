@@ -9001,6 +9001,11 @@
             });
         }
         
+        // Portföy kartlarını göster (alias for compatibility)
+        function displayPortfolioCards(portfolio, container) {
+            return displayPortfolioCardsWithRealTime(portfolio, container);
+        }
+        
         // Portföy tablosunu göster
         function displayPortfolioTable(portfolio, tbody) {
             tbody.innerHTML = '';

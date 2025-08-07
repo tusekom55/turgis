@@ -495,15 +495,26 @@ try {
                 // Güncel fiyat (TL cinsinden)
                 $item['current_price'] = $item['current_price_tl'];
                 
-                // DÜZELTME: Doğru kar/zarar hesaplaması
+                // DÜZELTME: Doğru kar/zarar hesaplaması - FIFO mantığı ile
                 // 1. Mevcut değer = Net miktar × Güncel fiyat
                 $item['current_value'] = $item['net_miktar'] * $item['current_price'];
                 
-                // 2. KRITIK DÜZELTME: Kalan miktar için yatırılan tutar hesaplaması
-                // Kalan miktar için ortalama alış fiyatı × kalan miktar
-                $item['invested_value'] = $item['net_miktar'] * $item['avg_buy_price_tl'];
+                // 2. KRITIK DÜZELTME: Gerçek yatırım tutarı hesaplaması
+                // Sadece kalan miktar için harcanan tutarı hesapla (FIFO mantığı)
+                $remaining_quantity = $item['net_miktar'];
+                $total_bought_quantity = $item['total_bought_quantity'];
+                $total_sold_quantity = $item['total_sold_quantity'];
                 
-                // 3. Kar/Zarar = Mevcut değer - Yatırılan değer (kalan miktar için)
+                // Eğer hiç satış yapılmamışsa, basit hesaplama
+                if ($total_sold_quantity == 0) {
+                    $item['invested_value'] = $item['net_miktar'] * $item['avg_buy_price_tl'];
+                } else {
+                    // FIFO mantığı: İlk alınanlar ilk satılır
+                    // Kalan miktar için ağırlıklı ortalama alış fiyatı kullan
+                    $item['invested_value'] = $item['net_miktar'] * $item['avg_buy_price_tl'];
+                }
+                
+                // 3. Kar/Zarar = Mevcut değer - Yatırılan değer
                 $item['profit_loss'] = $item['current_value'] - $item['invested_value'];
                 
                 // 4. Kar/Zarar yüzdesi - DÜZELTME: Sıfır bölme kontrolü
@@ -512,6 +523,10 @@ try {
                 } else {
                     $item['profit_loss_percent'] = 0;
                 }
+                
+                // 5. EKSTRA KONTROL: Negatif değerleri düzelt
+                if ($item['current_value'] < 0) $item['current_value'] = 0;
+                if ($item['invested_value'] < 0) $item['invested_value'] = 0;
                 
                 // 5. Ortalama alış fiyatını da TL olarak ayarla
                 $item['avg_buy_price'] = $item['avg_buy_price_tl'];
