@@ -7,11 +7,11 @@ session_start();
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../utils/price_manager.php';
 
-// Admin kontrolü - Geçici olarak devre dışı (test için)
-// if (!isset($_SESSION['admin_id'])) {
-//     header('Location: login.php');
-//     exit;
-// }
+// Admin kontrolü
+if (!isset($_SESSION['admin_id'])) {
+    header('Location: ../admin-login.html');
+    exit;
+}
 
 $priceManager = new PriceManager();
 $message = '';
