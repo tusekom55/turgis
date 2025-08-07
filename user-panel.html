@@ -10019,60 +10019,65 @@
             }
         }
 
-        // Modal coin icon'unu dinamik olarak güncelle
+        // Modal coin icon'unu dinamik olarak güncelle - GERÇEK LOGOLARLA
         function updateModalCoinIcon(coinSymbol) {
-            const modalCoinIcon = document.getElementById('modalCoinIcon');
-            if (!modalCoinIcon) return;
+            const modalCoinIconContainer = document.querySelector('.coin-icon-container');
+            if (!modalCoinIconContainer) return;
             
-            // Coin'e özel icon'lar
-            const coinIcons = {
-                'BTC': 'fab fa-bitcoin',
-                'ETH': 'fab fa-ethereum', 
-                'BNB': 'fas fa-coins',
-                'ADA': 'fas fa-heart',
-                'SOL': 'fas fa-sun',
-                'XRP': 'fas fa-water',
-                'DOT': 'fas fa-circle',
-                'DOGE': 'fas fa-dog',
-                'AVAX': 'fas fa-mountain',
-                'SHIB': 'fas fa-paw',
-                'LINK': 'fas fa-link',
-                'TRX': 'fas fa-bolt',
-                'MATIC': 'fas fa-polygon',
-                'LTC': 'fab fa-litecoin-sign',
-                'BCH': 'fab fa-bitcoin',
-                'UNI': 'fas fa-unicorn',
-                'ATOM': 'fas fa-atom',
-                'XLM': 'fas fa-star',
-                'VET': 'fas fa-check-circle',
-                'FIL': 'fas fa-file',
-                'THETA': 'fas fa-play-circle',
-                'ICP': 'fas fa-infinity',
-                'ALGO': 'fas fa-algorithm',
-                'XTZ': 'fas fa-cube',
-                'EGLD': 'fas fa-crown',
-                'AAVE': 'fas fa-university',
-                'EOS': 'fas fa-globe',
-                'XMR': 'fas fa-eye-slash',
-                'MANA': 'fas fa-vr-cardboard',
-                'SAND': 'fas fa-cube',
-                'CRO': 'fas fa-credit-card',
-                'NEAR': 'fas fa-compass',
-                'APE': 'fas fa-monkey',
-                'LDO': 'fas fa-shield-alt',
-                'USDT': 'fas fa-dollar-sign',
-                'USDC': 'fas fa-dollar-sign',
-                'BUSD': 'fas fa-dollar-sign',
-                'DAI': 'fas fa-dollar-sign'
+            // Gerçek coin logoları (piyasalardaki gibi)
+            const coinLogos = {
+                'BTC': 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png',
+                'ETH': 'https://assets.coingecko.com/coins/images/279/large/ethereum.png',
+                'BNB': 'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png',
+                'ADA': 'https://assets.coingecko.com/coins/images/975/large/cardano.png',
+                'SOL': 'https://assets.coingecko.com/coins/images/4128/large/solana.png',
+                'XRP': 'https://assets.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png',
+                'DOT': 'https://assets.coingecko.com/coins/images/12171/large/polkadot.png',
+                'DOGE': 'https://assets.coingecko.com/coins/images/5/large/dogecoin.png',
+                'AVAX': 'https://assets.coingecko.com/coins/images/12559/large/Avalanche_Circle_RedWhite_Trans.png',
+                'SHIB': 'https://assets.coingecko.com/coins/images/11939/large/shiba.png',
+                'LINK': 'https://assets.coingecko.com/coins/images/877/large/chainlink-new-logo.png',
+                'TRX': 'https://assets.coingecko.com/coins/images/1094/large/tron-logo.png',
+                'MATIC': 'https://assets.coingecko.com/coins/images/4713/large/matic-token-icon.png',
+                'LTC': 'https://assets.coingecko.com/coins/images/2/large/litecoin.png',
+                'BCH': 'https://assets.coingecko.com/coins/images/780/large/bitcoin-cash-circle.png',
+                'UNI': 'https://assets.coingecko.com/coins/images/12504/large/uniswap-uni.png',
+                'ATOM': 'https://assets.coingecko.com/coins/images/1481/large/cosmos_hub.png',
+                'XLM': 'https://assets.coingecko.com/coins/images/100/large/Stellar_symbol_black_RGB.png',
+                'VET': 'https://assets.coingecko.com/coins/images/1167/large/VeChain-Logo-768x725.png',
+                'FIL': 'https://assets.coingecko.com/coins/images/12817/large/filecoin.png',
+                'THETA': 'https://assets.coingecko.com/coins/images/2538/large/theta-token-logo.png',
+                'ICP': 'https://assets.coingecko.com/coins/images/14495/large/Internet_Computer_logo.png',
+                'ALGO': 'https://assets.coingecko.com/coins/images/4380/large/download.png',
+                'XTZ': 'https://assets.coingecko.com/coins/images/976/large/Tezos-logo.png',
+                'EGLD': 'https://assets.coingecko.com/coins/images/12335/large/egld-token-logo.png',
+                'AAVE': 'https://assets.coingecko.com/coins/images/12645/large/AAVE.png',
+                'EOS': 'https://assets.coingecko.com/coins/images/738/large/eos-eos-logo.png',
+                'XMR': 'https://assets.coingecko.com/coins/images/69/large/monero_logo.png',
+                'MANA': 'https://assets.coingecko.com/coins/images/878/large/decentraland-mana.png',
+                'SAND': 'https://assets.coingecko.com/coins/images/12129/large/sandbox_logo.jpg',
+                'CRO': 'https://assets.coingecko.com/coins/images/7310/large/cypto.png',
+                'NEAR': 'https://assets.coingecko.com/coins/images/10365/large/near_icon.png',
+                'APE': 'https://assets.coingecko.com/coins/images/24383/large/apecoin.jpg',
+                'LDO': 'https://assets.coingecko.com/coins/images/13573/large/Lido_DAO.png',
+                'USDT': 'https://assets.coingecko.com/coins/images/325/large/Tether.png',
+                'USDC': 'https://assets.coingecko.com/coins/images/6319/large/USD_Coin_icon.png',
+                'BUSD': 'https://assets.coingecko.com/coins/images/9576/large/BUSD.png',
+                'DAI': 'https://assets.coingecko.com/coins/images/9956/large/4943.png'
             };
             
-            // Icon class'ını belirle
-            const iconClass = coinIcons[coinSymbol] || 'fas fa-coins';
+            // Logo URL'ini belirle
+            const logoUrl = coinLogos[coinSymbol] || `https://via.placeholder.com/56/4fc3f7/ffffff?text=${coinSymbol.charAt(0)}`;
             
-            // Icon'u güncelle
-            modalCoinIcon.className = iconClass;
+            // Mevcut içeriği temizle ve img elementi ekle
+            modalCoinIconContainer.innerHTML = `
+                <img src="${logoUrl}" 
+                     alt="${coinSymbol}" 
+                     style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;"
+                     onerror="this.style.display='none'; this.parentNode.innerHTML='<i class=\\"fas fa-coins\\" style=\\"font-size: 24px; color: white;\\"></i>'">
+            `;
             
-            console.log(`🎨 Modal icon güncellendi: ${coinSymbol} -> ${iconClass}`);
+            console.log(`🎨 Modal logo güncellendi: ${coinSymbol} -> ${logoUrl}`);
         }
 
         // Enhanced Trading modalını kapat
