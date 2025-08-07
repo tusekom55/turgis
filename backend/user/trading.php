@@ -371,7 +371,7 @@ try {
             $usd_try_rate = 30.0; // 1 USD = 30 TL (güncel kur için API entegrasyonu yapılabilir)
             
             // Gerekli tabloların varlığını kontrol et
-            $required_tables = ['coins', 'coin_islemleri', 'coin_kategorileri'];
+            $required_tables = ['coins', 'coin_islemleri'];
             foreach ($required_tables as $table) {
                 $table_check = $conn->prepare("SHOW TABLES LIKE '" . $table . "'");
                 $table_check->execute();
@@ -396,8 +396,7 @@ try {
                                         c.coin_kodu,
                                         COALESCE(c.current_price, 0) as current_price_tl,
                                         COALESCE(c.price_change_24h, 0) as price_change_24h,
-                                        COALESCE(c.kategori_id, 1) as kategori_id,
-                                        COALESCE(ck.kategori_adi, 'Diğer') as kategori_adi
+                                        'Kripto Para' as kategori_adi
                                       FROM (
                                         SELECT 
                                             ci.coin_id,
@@ -433,7 +432,6 @@ try {
                                         HAVING SUM(CASE WHEN ci.islem = 'al' THEN ci.miktar ELSE -ci.miktar END) > 0.00000001
                                       ) p
                                       JOIN coins c ON p.coin_id = c.id
-                                      LEFT JOIN coin_kategorileri ck ON c.kategori_id = ck.id
                                       WHERE c.is_active = 1
                                       ORDER BY (p.net_miktar * c.current_price) DESC";
                 
