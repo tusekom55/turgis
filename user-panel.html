@@ -10503,7 +10503,7 @@
                 const priceChangeClass = coin.price_change_24h >= 0 ? 'positive' : 'negative';
                 const priceChangeIcon = coin.price_change_24h >= 0 ? '▲' : '▼';
                 
-                // Orijinal coin logoları
+                // Orijinal coin logoları - coins.php ile uyumlu
                 const coinLogos = {
                     'BTC': 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png',
                     'ETH': 'https://assets.coingecko.com/coins/images/279/large/ethereum.png',
@@ -10545,7 +10545,8 @@
                     'DAI': 'https://assets.coingecko.com/coins/images/9956/large/4943.png'
                 };
                 
-                const logoUrl = coin.logo_url || coinLogos[coin.coin_kodu] || `https://via.placeholder.com/48/4fc3f7/ffffff?text=${coin.coin_kodu.charAt(0)}`;
+                // Logo URL'ini belirle - coins.php'den gelen logo_url veya coin_kodu ile eşleştir
+                const logoUrl = coin.logo_url || coinLogos[coin.coin_kodu] || coinLogos[coin.symbol] || `https://via.placeholder.com/48/4fc3f7/ffffff?text=${(coin.coin_kodu || coin.symbol || 'C').charAt(0)}`;
                 
                         const card = document.createElement('div');
                         card.className = 'desktop-coin-card';
@@ -10604,7 +10605,7 @@
                 const priceChangeClass = coin.price_change_24h >= 0 ? 'positive' : 'negative';
                 const priceChangeIcon = coin.price_change_24h >= 0 ? '▲' : '▼';
                 
-                // Orijinal coin logoları
+                // Orijinal coin logoları - coins.php ile uyumlu
                 const coinLogos = {
                     'BTC': 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png',
                     'ETH': 'https://assets.coingecko.com/coins/images/279/large/ethereum.png',
@@ -10646,7 +10647,8 @@
                     'DAI': 'https://assets.coingecko.com/coins/images/9956/large/4943.png'
                 };
                 
-                const logoUrl = coin.logo_url || coinLogos[coin.coin_kodu] || `https://via.placeholder.com/50/4fc3f7/ffffff?text=${coin.coin_kodu.charAt(0)}`;
+                // Logo URL'ini belirle - coins.php'den gelen logo_url veya coin_kodu ile eşleştir
+                const logoUrl = coin.logo_url || coinLogos[coin.coin_kodu] || coinLogos[coin.symbol] || `https://via.placeholder.com/50/4fc3f7/ffffff?text=${(coin.coin_kodu || coin.symbol || 'C').charAt(0)}`;
                 
                 const card = document.createElement('div');
                 card.className = 'mobile-coin-card';
