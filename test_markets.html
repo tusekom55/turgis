@@ -114,8 +114,7 @@
                 coin_kodu: 'BTC',
                 current_price: 1350000,
                 price_change_24h: 2.5,
-                kategori_adi: 'Kripto Para',
-                logo_url: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png'
+                kategori_adi: 'Kripto Para'
             },
             {
                 id: 2,
@@ -123,8 +122,7 @@
                 coin_kodu: 'ETH',
                 current_price: 85000,
                 price_change_24h: -1.2,
-                kategori_adi: 'Kripto Para',
-                logo_url: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png'
+                kategori_adi: 'Kripto Para'
             },
             {
                 id: 3,
@@ -132,8 +130,7 @@
                 coin_kodu: 'BNB',
                 current_price: 12500,
                 price_change_24h: 0.8,
-                kategori_adi: 'Kripto Para',
-                logo_url: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png'
+                kategori_adi: 'Kripto Para'
             },
             {
                 id: 4,
@@ -141,8 +138,7 @@
                 coin_kodu: 'ADA',
                 current_price: 15.50,
                 price_change_24h: 3.2,
-                kategori_adi: 'Kripto Para',
-                logo_url: 'https://assets.coingecko.com/coins/images/975/small/cardano.png'
+                kategori_adi: 'Kripto Para'
             },
             {
                 id: 5,
@@ -150,8 +146,7 @@
                 coin_kodu: 'SOL',
                 current_price: 4250,
                 price_change_24h: -2.1,
-                kategori_adi: 'Kripto Para',
-                logo_url: 'https://assets.coingecko.com/coins/images/4128/small/solana.png'
+                kategori_adi: 'Kripto Para'
             }
         ];
 
@@ -182,11 +177,7 @@
             container.innerHTML = coins.map(coin => `
                 <div class="coin-row">
                     <div class="coin-info">
-                        ${coin.logo_url ? 
-                            `<img src="${coin.logo_url}" alt="${coin.coin_kodu}" class="coin-logo" style="object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                             <div class="coin-logo" style="display: none;">${coin.coin_kodu.substring(0, 2)}</div>` :
-                            `<div class="coin-logo">${coin.coin_kodu.substring(0, 2)}</div>`
-                        }
+                        <div class="coin-logo">${coin.coin_kodu.substring(0, 2)}</div>
                         <div>
                             <div style="font-weight: bold;">${coin.coin_adi}</div>
                             <div style="color: #64748b; font-size: 12px;">${coin.coin_kodu}</div>
