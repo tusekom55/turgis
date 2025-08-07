@@ -10019,7 +10019,7 @@
             }
         }
 
-        // Modal coin icon'unu dinamik olarak güncelle - GERÇEK LOGOLARLA (DÜZELTME: Eski tasarımı koruyarak)
+        // Modal coin icon'unu dinamik olarak güncelle - SADECE LOGO (DÜZELTME: Icon tamamen kaldırıldı)
         function updateModalCoinIcon(coinSymbol) {
             const modalCoinIconContainer = document.querySelector('.coin-icon-container');
             if (!modalCoinIconContainer) return;
@@ -10070,26 +10070,19 @@
             const logoUrl = coinLogos[coinSymbol];
             
             if (logoUrl) {
-                // Gerçek logo varsa, img elementi ile değiştir (eski tasarımı koruyarak)
+                // SADECE LOGO - icon tamamen kaldırıldı
                 modalCoinIconContainer.innerHTML = `
                     <img src="${logoUrl}" 
                          alt="${coinSymbol}" 
-                         style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;"
-                         onerror="this.parentNode.innerHTML='<i class=\\"fab fa-bitcoin\\" style=\\"font-size: 24px; color: white;\\"></i>'">
+                         style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: none;"
+                         onerror="this.style.display='none'; this.parentNode.style.background='linear-gradient(135deg, #ff7c4c 0%, #ff9a3c 100%)'; this.parentNode.innerHTML='<span style=\\"font-size: 24px; color: white; font-weight: bold;\\">${coinSymbol.charAt(0)}</span>';">
                 `;
             } else {
-                // Gerçek logo yoksa, eski FontAwesome ikonunu kullan
-                const iconMap = {
-                    'BTC': 'fab fa-bitcoin',
-                    'ETH': 'fab fa-ethereum',
-                    'LTC': 'fab fa-bitcoin',
-                    'BCH': 'fab fa-bitcoin'
-                };
-                const iconClass = iconMap[coinSymbol] || 'fas fa-coins';
-                modalCoinIconContainer.innerHTML = `<i class="${iconClass}" style="font-size: 24px; color: white;"></i>`;
+                // Logo yoksa sadece harf göster - icon yok
+                modalCoinIconContainer.innerHTML = `<span style="font-size: 24px; color: white; font-weight: bold;">${coinSymbol.charAt(0)}</span>`;
             }
             
-            console.log(`🎨 Modal logo güncellendi (tasarım korundu): ${coinSymbol} -> ${logoUrl || 'FontAwesome icon'}`);
+            console.log(`🎨 Modal SADECE logo güncellendi (icon kaldırıldı): ${coinSymbol} -> ${logoUrl || 'Letter only'}`);
         }
 
         // Enhanced Trading modalını kapat
