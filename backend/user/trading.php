@@ -399,6 +399,7 @@ try {
                                         p.*,
                                         c.coin_adi,
                                         c.coin_kodu,
+                                        c.logo_url,
                                         COALESCE(c.current_price, 0) as current_price,
                                         COALESCE(c.price_change_24h, 0) as price_change_24h,
                                         'Kripto Para' as kategori_adi
